@@ -21,7 +21,17 @@
 
   header{position:sticky; top:0; z-index:20; background:var(--field-dark); color:#fff;
     padding:12px 16px 10px; box-shadow:0 2px 12px rgba(20,33,28,.18);}
+  .hdr-top{display:flex;align-items:center;justify-content:space-between;gap:10px}
   header .title{font-size:15px; font-weight:700; display:flex; align-items:center; gap:8px}
+  .refreshbtn{flex:0 0 auto;width:36px;height:36px;border:none;border-radius:10px;
+    background:rgba(255,255,255,.16);color:#fff;font-size:17px;cursor:pointer;
+    display:flex;align-items:center;justify-content:center;transition:.15s;padding:0}
+  .refreshbtn:active{background:rgba(255,255,255,.3)}
+  .refreshbtn.spin #refIcon{display:inline-block;animation:spin .8s linear infinite}
+  @keyframes spin{from{transform:rotate(0)}to{transform:rotate(360deg)}}
+  .scopebar{font-size:12px;font-weight:700;margin-top:7px;padding:4px 10px;border-radius:99px;
+    background:rgba(255,255,255,.16);display:inline-block;max-width:100%;
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   header .sub{font-size:12px; opacity:.85; margin-top:2px; display:flex; align-items:center; gap:6px; flex-wrap:wrap}
   .syncdot{width:8px;height:8px;border-radius:99px;background:#8fd6a6;display:inline-block}
   .syncdot.off{background:#e6a44c}.syncdot.err{background:#e07a7a}
@@ -71,7 +81,6 @@
     border-radius:9px; font-size:14px; font-weight:700; cursor:pointer}
   .card.counted .btn-count{background:#fff; color:var(--field-dark); border:1.5px solid var(--field)}
   .synced-mark{font-size:11px;color:var(--field);font-weight:700}
-  .queued-mark{font-size:11px;color:var(--amber);font-weight:700}
   .by-mark{font-size:11px;color:var(--blue);font-weight:700;background:#eef2f5;padding:1px 7px;border-radius:6px}
   .emptymsg{text-align:center; color:var(--grey); padding:50px 20px; font-size:15px}
 
@@ -296,12 +305,18 @@
 <!-- ===== MAIN APP (hidden until data loaded) ===== -->
 <div id="app" class="hide">
 <header>
-  <div class="title">📋 ตรวจนับสินทรัพย์ถาวร</div>
+  <div class="hdr-top">
+    <div class="title">📋 ตรวจนับสินทรัพย์ถาวร</div>
+    <button class="refreshbtn" id="btnRefresh" onclick="refreshAll(true)" title="อัปเดตข้อมูลล่าสุด">
+      <span id="refIcon">🔄</span>
+    </button>
+  </div>
   <div class="sub">
     <span class="syncdot" id="syncDot"></span>
     <span id="syncText">พร้อมใช้งาน</span>
     <span class="pill" id="whoPill">ยังไม่ระบุผู้นับ</span>
   </div>
+  <div class="scopebar" id="scopeBar">ทุกด้าน · ทุกแผนก</div>
   <div class="progressbar"><i id="hdrProg"></i></div>
   <div class="hdr-stat">
     <div><b id="stCounted">0</b><span>นับแล้ว</span></div>
@@ -415,15 +430,10 @@
     <b>จัดการผลตรวจนับ</b><br>
     <span id="resultInfo">—</span>
   </div>
-  <button class="btn-ghost" onclick="pullReplace()" style="margin-bottom:10px">
-    ⬇︎ ดึงจากศูนย์กลางมาแทนที่ทั้งหมด</button>
-  <div class="mini" style="text-align:left;padding:0 2px 14px">
-    ใช้เมื่อ Sheet คือข้อมูลที่ถูกต้อง — ผลในเครื่องจะถูกแทนที่ด้วยของใน Sheet
-    (รายการที่ลบไปจาก Sheet จะหายจากเครื่องนี้ด้วย)
-  </div>
-  <button class="btn-danger" onclick="clearResults()">🗑️ ล้างผลตรวจนับในเครื่องนี้</button>
+  <button class="btn-ghost" onclick="refreshAll(true)">🔄 อัปเดตผลตรวจนับจากศูนย์กลาง</button>
   <div class="mini" style="text-align:left;padding:0 2px 0">
-    ลบผลนับทั้งหมดในเครื่องนี้ เริ่มนับใหม่ (ไม่กระทบข้อมูลใน Google Sheet)
+    ระบบทำงานแบบออนไลน์ — ผลตรวจนับทั้งหมดอยู่ใน Google Sheet ที่เดียว
+    บันทึกทุกครั้งจะขึ้น Sheet ทันที ถ้าไม่มีเน็ตจะแจ้งเตือนและไม่บันทึก
   </div>
   <div class="mini" style="text-align:left;padding:10px 2px 0">
     เปลี่ยนไฟล์จะล้างรายการสินทรัพย์เดิม แต่<b>ไม่ลบผลนับ</b>ที่ทำไปแล้ว (ผูกตามรหัส Asset)
@@ -458,7 +468,7 @@
   <button class="on" id="navCount" onclick="showPage('count')"><span class="i">✓</span>ตรวจนับ</button>
   <button id="navDash" onclick="showPage('dash')"><span class="i">📈</span>แดชบอร์ด</button>
   <button id="navSummary" onclick="showPage('summary')"><span class="i">📊</span>สรุปผล</button>
-  <button id="navSetup" onclick="showPage('setup')"><span class="i">⚙︎</span>ตั้งค่า<span id="navQueue" class="dot hide">0</span></button>
+  <button id="navSetup" onclick="showPage('setup')"><span class="i">⚙︎</span>ตั้งค่า</button>
 </div>
 </div><!-- /#app -->
 
@@ -524,7 +534,7 @@ const COLMAP = {
 const CUT_KEEP = "นับ";   // ค่าที่ถือว่า "ต้องตรวจนับ"
 
 let ASSETS = [];
-let results = {}, queue = {};
+let results = {};
 let counterName = localStorage.getItem(K_NAME) || "";
 let webAppUrl   = localStorage.getItem(K_URL)  || "";
 let deviceId    = localStorage.getItem(K_DEVICE) || "";
@@ -544,7 +554,7 @@ try { results = JSON.parse(localStorage.getItem(K_RESULTS) || "{}"); } catch(e){
   }
   if(changed){ try{ localStorage.setItem(K_RESULTS, JSON.stringify(results)); }catch(e){} }
 })();
-try { queue   = JSON.parse(localStorage.getItem(K_QUEUE)   || "{}"); } catch(e){}
+try { localStorage.removeItem(K_QUEUE); } catch(e){}   // โหมดออนไลน์: ล้างคิวเก่าทิ้ง
 
 function keyOf(x){ return x.a + "|" + (x.sub||"0"); }
 function cleanStr(v){
@@ -739,65 +749,9 @@ function updateDataInfo(){
 }
 function updateResultInfo(){
   const el=document.getElementById("resultInfo"); if(!el) return;
-  const n=Object.keys(results).length, q=Object.keys(queue).length;
-  el.innerHTML = "ผลนับในเครื่องนี้: <b>"+n.toLocaleString()+"</b> รายการ"
-    + (q? '<br><span style="color:var(--amber)">รอส่งขึ้นศูนย์กลาง: '+q.toLocaleString()+' รายการ</span>' : '')
-    + (lastPullAt? "<br>ดึงข้อมูลล่าสุด: "+lastPullAt.toLocaleString("th-TH") : "");
-}
-
-/* ดึงจากศูนย์กลางมาแทนที่ทั้งหมด — Sheet เป็นตัวหลัก */
-async function pullReplace(){
-  if(!webAppUrl){ toast("ยังไม่ได้ตั้งค่าศูนย์กลาง"); return; }
-  const q=Object.keys(queue).length;
-  let msg="ดึงข้อมูลจากศูนย์กลางมาแทนที่ผลนับในเครื่องนี้ทั้งหมด?\n\n"
-    +"• รายการที่ถูกลบไปจาก Google Sheet จะหายจากเครื่องนี้ด้วย\n"
-    +"• ใช้เมื่อต้องการให้เครื่องนี้ตรงกับ Sheet เป๊ะๆ";
-  if(q) msg+="\n\n⚠️ มี "+q+" รายการที่ยังส่งไม่สำเร็จ จะถูกเก็บไว้ (ไม่หาย)";
-  if(!confirm(msg)) return;
-
-  const s=document.getElementById("setupStatus"); s.classList.remove("hide");
-  s.className="status-line warn"; s.textContent="กำลังดึงข้อมูล...";
-  try{
-    const res=await fetch(webAppUrl+(webAppUrl.includes("?")?"&":"?")+"action=pull&t="+Date.now());
-    const data=await res.json();
-    if(!(data&&data.ok)) throw new Error("รูปแบบข้อมูลผิด");
-    const fresh={};
-    for(const r of (data.rows||[])){
-      const k=String(r.asset)+"|"+String(r.sub||"0");
-      const qq={}; let tot=0;
-      for(let i=1;i<=6;i++){ const v=Number(r["q"+i]||0); if(v>0){ qq[i]=v; tot+=v; } }
-      if(tot===0 && !(r.note||"") && !Number(r.qr)) continue;
-      fresh[k]={ q:qq, qty:(r.qty===""||r.qty==null)?tot:Number(r.qty),
-                 note:r.note||"", qr:(Number(r.qr)?1:0), at:r.at||"", by:r.by||"" };
-    }
-    // เก็บรายการที่ยังค้างส่งไว้ (ยังไม่ขึ้น Sheet จะได้ไม่หาย)
-    for(const k in queue){ if(results[k]) fresh[k]=results[k]; }
-    const before=Object.keys(results).length;
-    results=fresh; persist(); render(); updateStats(); updateResultInfo();
-    if(!document.getElementById("pageDash").classList.contains("hide")) renderDash();
-    lastPullAt=new Date();
-    s.className="status-line ok";
-    s.textContent="แทนที่แล้ว ✓ จาก "+before.toLocaleString()+" → "+Object.keys(results).length.toLocaleString()+" รายการ";
-    toast("ตรงกับศูนย์กลางแล้ว ✓");
-  }catch(err){
-    s.className="status-line err"; s.textContent="ดึงข้อมูลไม่สำเร็จ — ตรวจ URL/เน็ต แล้วลองใหม่";
-  }
-}
-
-/* ล้างผลนับในเครื่อง */
-function clearResults(){
   const n=Object.keys(results).length;
-  if(n===0){ toast("ไม่มีผลนับในเครื่องนี้"); return; }
-  if(!confirm("ล้างผลตรวจนับในเครื่องนี้ทั้งหมด "+n.toLocaleString()+" รายการ?\n\n"
-    +"• ข้อมูลใน Google Sheet ไม่ถูกลบ\n"
-    +"• รายการที่ยังส่งไม่สำเร็จจะหายด้วย\n\nยืนยันหรือไม่?")) return;
-  if(!confirm("ยืนยันอีกครั้ง — ลบผลนับ "+n.toLocaleString()+" รายการในเครื่องนี้")) return;
-  results={}; queue={}; persist();
-  render(); updateStats(); updateQueueBadge(); updateResultInfo();
-  if(!document.getElementById("pageDash").classList.contains("hide")) renderDash();
-  const s=document.getElementById("setupStatus"); s.classList.remove("hide");
-  s.className="status-line ok"; s.textContent="ล้างผลนับในเครื่องแล้ว ✓";
-  toast("ล้างแล้ว เริ่มนับใหม่ได้เลย");
+  el.innerHTML = "ผลตรวจนับใน Google Sheet: <b>"+n.toLocaleString()+"</b> รายการ"
+    + (lastPullAt? "<br>อัปเดตล่าสุด: "+lastPullAt.toLocaleString("th-TH") : "");
 }
 
 function changeFile(){
@@ -854,8 +808,7 @@ function render(){
       btn="แก้ไข";
       if(hasLost(r)) cls+=" lost"; else if(hasIssue(r)) cls+=" issue"; else cls+=" done";
       if(r.qty!==(x.q||0)) badge+='<span class="badge s4">ผลต่าง '+((r.qty||0)-(x.q||0))+'</span>';
-      mark = queue[k] ? '<span class="queued-mark">⏳ รอส่ง</span>' : '<span class="synced-mark">✓ ส่งแล้ว</span>';
-      if(r.by && r.by!==counterName) mark += '<span class="by-mark">👤 '+esc(r.by)+'</span>';
+      mark = (r.by && r.by!==counterName) ? '<span class="by-mark">👤 '+esc(r.by)+'</span>' : '';
       if(r.qr) mark += '<span class="qr-chip">🏷️ ต้องติด QR</span>';
     }
     const sn=x.sn?'<span class="tag sn">SN '+esc(x.sn)+'</span>':'';
@@ -967,10 +920,37 @@ function saveCount(){
   }
   const qrFlag = document.getElementById("shQR").checked ? 1 : 0;
   const rec={ q:q, qty:total, note:note, qr:qrFlag, at:new Date().toISOString(), by:counterName };
-  results[editingKey]=rec; queue[editingKey]=buildPayload(x, rec); persist();
-  closeSheet(); render(); updateStats(); updateQueueBadge();
-  if(!document.getElementById("pageDash").classList.contains("hide")) renderDash();
-  toast("บันทึกแล้ว ✓"); syncNow(false);
+  if(!webAppUrl){ toast("ยังไม่ได้ตั้งค่าศูนย์กลาง"); showPage('setup'); return; }
+  saveToCloud(x, rec);
+}
+
+/* บันทึกขึ้น Google Sheet ทันที — สำเร็จเท่านั้นจึงถือว่าบันทึกแล้ว */
+async function saveToCloud(x, rec){
+  const key=keyOf(x);
+  const btn=document.querySelector(".btn-save");
+  const oldTxt=btn?btn.textContent:"บันทึกผลนับ";
+  if(btn){ btn.disabled=true; btn.textContent="กำลังบันทึก..."; }
+  setSync("","กำลังบันทึกขึ้นศูนย์กลาง...");
+  try{
+    const res=await fetch(webAppUrl,{ method:"POST",
+      headers:{"Content-Type":"text/plain;charset=utf-8"},
+      body:JSON.stringify({rows:[buildPayload(x, rec)]}) });
+    const data=await res.json();
+    if(!(data&&data.ok)) throw new Error((data&&data.error)||"ไม่สำเร็จ");
+    results[key]=rec;                 // เก็บเฉพาะเมื่อขึ้น Sheet สำเร็จแล้วเท่านั้น
+    persist();
+    closeSheet(); render(); updateStats();
+    if(!document.getElementById("pageDash").classList.contains("hide")) renderDash();
+    setSync("on","บันทึกขึ้นศูนย์กลางแล้ว");
+    toast("บันทึกแล้ว ✓");
+  }catch(err){
+    setSync("err","บันทึกไม่สำเร็จ");
+    alert("บันทึกไม่สำเร็จ — เชื่อมต่อศูนย์กลางไม่ได้\n\n"
+      +"⚠️ ผลนับรายการนี้ยังไม่ถูกบันทึก\n\n"
+      +"กรุณาตรวจสัญญาณอินเทอร์เน็ต แล้วกด \"บันทึกผลนับ\" อีกครั้ง");
+  }finally{
+    if(btn){ btn.disabled=false; btn.textContent=oldTxt; }
+  }
 }
 function buildPayload(x, rec){
   const q=rec.q||{};
@@ -992,32 +972,11 @@ function hasIssue(rec){
 }
 function hasLost(rec){ return Number((rec.q||{})[6]||0)>0; }
 
-let syncing=false;
 function setSync(state, text){
   const dot=document.getElementById("syncDot"), t=document.getElementById("syncText");
   dot.className="syncdot"+(state==="off"?" off":state==="err"?" err":""); t.textContent=text;
 }
-async function syncNow(manual){
-  const keys=Object.keys(queue);
-  if(!webAppUrl){ if(manual){ toast("ยังไม่ได้ตั้งค่าศูนย์กลาง"); showPage('setup'); } return; }
-  if(keys.length===0){ if(manual) toast("ไม่มีรายการค้างส่ง ✓"); setSync("on","ข้อมูลตรงกับศูนย์กลาง"); return; }
-  if(syncing) return;
-  syncing=true; setSync("","กำลังส่ง "+keys.length+" รายการ...");
-  const rows=keys.map(k=>queue[k]);
-  try{
-    const res=await fetch(webAppUrl, { method:"POST", body:JSON.stringify({rows}),
-      headers:{"Content-Type":"text/plain;charset=utf-8"} });
-    const data=await res.json();
-    if(data && data.ok){
-      keys.forEach(k=>delete queue[k]); persist(); render(); updateQueueBadge();
-      setSync("on","ส่งเข้าศูนย์กลางแล้ว");
-      if(manual) toast("ส่งสำเร็จ "+keys.length+" รายการ ✓");
-    } else { throw new Error(data && data.error || "?"); }
-  }catch(err){
-    setSync("err","ส่งไม่สำเร็จ · เก็บไว้ในเครื่องแล้ว");
-    if(manual) toast("ส่งไม่สำเร็จ: อาจไม่มีเน็ต (ข้อมูลยังอยู่ในเครื่อง)");
-  }finally{ syncing=false; updateQueueBadge(); }
-}
+
 /* ===== DASHBOARD ===== */
 let dashDiv=null;   // ด้านที่เลือกอยู่ (null = หน้าเลือกด้าน)
 
@@ -1132,15 +1091,12 @@ function gotoSection(sec){
   document.getElementById("fSec").value = curSec;
   curFilter="todo";
   document.querySelectorAll("#statusChips .chip").forEach(c=>c.classList.toggle("on", c.dataset.f==="todo"));
-  showPage('count'); render();
+  showPage('count'); render(); updateStats();
   toast("กรอง: "+sec+" (ยังไม่นับ)");
 }
 
-function updateQueueBadge(){
-  const n=Object.keys(queue).length; const b=document.getElementById("navQueue");
-  if(n>0){ b.textContent=n; b.classList.remove("hide"); } else b.classList.add("hide");
-  if(n>0 && webAppUrl) setSync("off", n+" รายการรอส่ง (แตะ ส่งเข้าศูนย์กลาง)");
-}
+function updateQueueBadge(){ /* ไม่ใช้แล้ว (โหมดออนไลน์) */ }
+
 
 /* ===== ดึงผลของทุกคนจากศูนย์กลาง (ให้เห็นตรงกัน) ===== */
 let pulling=false;
@@ -1157,29 +1113,23 @@ async function pullRemote(manual){
     const res=await fetch(webAppUrl+(webAppUrl.includes("?")?"&":"?")+"action=pull&t="+Date.now());
     const data=await res.json();
     if(!(data&&data.ok)) throw new Error("รูปแบบข้อมูลผิด");
-    let added=0, updated=0;
+    let added=0, updated=0; const fresh={};
     for(const r of (data.rows||[])){
       const k=String(r.asset)+"|"+String(r.sub||"0");
-      // ถ้ารายการนี้ยังค้างในคิวของเราเอง (ยังส่งไม่สำเร็จ) อย่าทับ — ของเราใหม่กว่า
-      if(queue[k]) continue;
       const q={}; let tot=0;
       for(let i=1;i<=6;i++){ const v=Number(r["q"+i]||0); if(v>0){ q[i]=v; tot+=v; } }
       if(tot===0 && !(r.note||"") && !Number(r.qr)) continue;   // ไม่มีข้อมูลจริง ข้าม
       const remote={ q:q, qty:(r.qty===""||r.qty==null)?tot:Number(r.qty),
                      note:r.note||"", qr:(Number(r.qr)?1:0), at:r.at||"", by:r.by||"" };
-      const local=results[k];
-      if(!local){ results[k]=remote; added++; }
-      else {
-        // ใครบันทึกทีหลังชนะ
-        const lt=Date.parse(local.at||0)||0, rt=Date.parse(remote.at||0)||0;
-        if(rt>lt){ results[k]=remote; updated++; }
-      }
+      fresh[k]=remote; added++;
     }
+    results=fresh;   // Sheet เป็นแหล่งข้อมูลเดียว — ลบที่ไม่มีใน Sheet ออกด้วย
     persist(); render(); updateStats();
     if(!document.getElementById("pageDash").classList.contains("hide")) renderDash();
     lastPullAt=new Date();
-    if(Object.keys(queue).length===0) setSync("on","ตรงกับศูนย์กลาง · อัปเดต "+lastPullAt.toLocaleTimeString("th-TH"));
-    if(manual) toast("ดึงข้อมูลแล้ว (ใหม่ "+added+" · อัปเดต "+updated+")");
+    setSync("on","ตรงกับศูนย์กลาง · อัปเดต "+lastPullAt.toLocaleTimeString("th-TH"));
+    updateResultInfo();
+    if(manual) toast("อัปเดตแล้ว · ผลนับ "+added.toLocaleString()+" รายการ");
   }catch(err){
     if(manual){ setSync("err","ดึงข้อมูลไม่สำเร็จ"); toast("ดึงไม่สำเร็จ: อาจไม่มีเน็ต"); }
   }finally{ pulling=false; updateQueueBadge(); }
@@ -1187,29 +1137,52 @@ async function pullRemote(manual){
 let lastPullAt=null;
 /* ส่งของเราขึ้น แล้วดึงของทุกคนลง */
 async function refreshAll(manual){
-  await syncNow(manual===true && Object.keys(queue).length>0);
-  await pullRemote(manual);
+  const btn=document.getElementById("btnRefresh");
+  if(btn) btn.classList.add("spin");
+  try{ await pullRemote(manual); }        // โหมดออนไลน์: Sheet เป็นแหล่งข้อมูลเดียว
+  finally{ if(btn) btn.classList.remove("spin"); }
 }
 /* อัตโนมัติทุก 30 วินาที */
 function startAutoPull(){
   setInterval(()=>{ if(webAppUrl && navigator.onLine && !document.hidden) refreshAll(false); }, 30000);
 }
-function updateStats(){
-  const total=ASSETS.length; let counted=0,issue=0,lost=0;
-  let qrn=0;
-  for(const x of ASSETS){ const r=results[keyOf(x)]; if(r){ counted++;
+/* รายการในขอบเขตที่เลือก (ด้าน/แผนก) — ไม่สนคำค้นหา/ชิปกรอง */
+function scopeList(){
+  if(!curDiv && !curSec) return ASSETS;
+  return ASSETS.filter(x=>{
+    if(curDiv){ const d=x.div||"(ไม่ระบุด้าน)"; if(d!==curDiv) return false; }
+    if(curSec && x.sec!==curSec) return false;
+    return true;
+  });
+}
+function calcStats(list){
+  let counted=0,issue=0,lost=0,qrn=0;
+  for(const x of list){ const r=results[keyOf(x)]; if(r){ counted++;
     if(hasIssue(r)) issue++; if(hasLost(r)) lost++; if(r.qr) qrn++; } }
-  const pct=total?Math.round(counted/total*100):0;
-  document.getElementById("stCounted").textContent=counted.toLocaleString();
-  document.getElementById("stTotal").textContent=total.toLocaleString();
-  document.getElementById("stPct").textContent=pct+"%";
-  document.getElementById("stIssue").textContent=issue.toLocaleString();
-  document.getElementById("hdrProg").style.width=pct+"%";
-  document.getElementById("sumCounted").textContent=counted.toLocaleString();
-  document.getElementById("sumTodo").textContent=(total-counted).toLocaleString();
-  document.getElementById("sumIssue").textContent=issue.toLocaleString();
-  document.getElementById("sumLost").textContent=lost.toLocaleString();
-  const qEl=document.getElementById("sumQR"); if(qEl) qEl.textContent=qrn.toLocaleString();
+  const total=list.length;
+  return {total:total, counted:counted, issue:issue, lost:lost, qrn:qrn,
+          remain:total-counted, pct: total?Math.round(counted/total*100):0};
+}
+function updateStats(){
+  // ---- แถบเขียวด้านบน: ตามด้าน/แผนกที่เลือก ----
+  const sc=calcStats(scopeList());
+  document.getElementById("stCounted").textContent=sc.counted.toLocaleString();
+  document.getElementById("stTotal").textContent=sc.total.toLocaleString();
+  document.getElementById("stPct").textContent=sc.pct+"%";
+  document.getElementById("stIssue").textContent=sc.issue.toLocaleString();
+  document.getElementById("hdrProg").style.width=sc.pct+"%";
+  const sb=document.getElementById("scopeBar");
+  if(sb){
+    sb.textContent=(curDiv||"ทุกด้าน")+" · "+(curSec||"ทุกแผนก");
+    sb.style.background=(curDiv||curSec)?"rgba(143,214,166,.32)":"rgba(255,255,255,.16)";
+  }
+  // ---- หน้าสรุปผล: ภาพรวมทั้งหมดเสมอ ----
+  const all=calcStats(ASSETS);
+  document.getElementById("sumCounted").textContent=all.counted.toLocaleString();
+  document.getElementById("sumTodo").textContent=all.remain.toLocaleString();
+  document.getElementById("sumIssue").textContent=all.issue.toLocaleString();
+  document.getElementById("sumLost").textContent=all.lost.toLocaleString();
+  const qEl=document.getElementById("sumQR"); if(qEl) qEl.textContent=all.qrn.toLocaleString();
 }
 function jumpQR(){
   curFilter="qr";
@@ -1232,7 +1205,7 @@ function renderDivProgress(){
   else w.classList.add("hide");
 }
 function persist(){
-  try{ localStorage.setItem(K_RESULTS, JSON.stringify(results)); localStorage.setItem(K_QUEUE, JSON.stringify(queue)); }
+  try{ localStorage.setItem(K_RESULTS, JSON.stringify(results)); }
   catch(e){ toast("บันทึกไม่สำเร็จ (พื้นที่เต็ม)"); }
 }
 function saveSetup(){
@@ -1242,7 +1215,7 @@ function saveSetup(){
   document.getElementById("whoPill").textContent=counterName||"ยังไม่ระบุผู้นับ";
   const s=document.getElementById("setupStatus"); s.className="status-line ok"; s.classList.remove("hide");
   s.textContent="บันทึกแล้ว ✓ "+(webAppUrl?"พร้อมส่งเข้าศูนย์กลาง":"(ยังไม่ใส่ URL — เก็บในเครื่องอย่างเดียว)");
-  updateQueueBadge(); if(webAppUrl && Object.keys(queue).length) syncNow(false);
+  updateResultInfo();
 }
 async function testConnection(){
   const url=document.getElementById("inpUrl").value.trim();
@@ -1301,8 +1274,10 @@ document.getElementById("statusChips").addEventListener("click",e=>{
 let searchTimer=null;
 document.getElementById("search").addEventListener("input",e=>{ clearTimeout(searchTimer);
   searchTimer=setTimeout(()=>{ curSearch=e.target.value.trim(); render(); },180); });
-document.getElementById("fDiv").addEventListener("change",e=>{ curDiv=e.target.value; curSec=""; refreshSecDropdown(); render(); });
-document.getElementById("fSec").addEventListener("change",e=>{ curSec=e.target.value; render(); });
+document.getElementById("fDiv").addEventListener("change",e=>{
+  curDiv=e.target.value; curSec=""; refreshSecDropdown(); render(); updateStats(); });
+document.getElementById("fSec").addEventListener("change",e=>{
+  curSec=e.target.value; render(); updateStats(); });
 document.getElementById("secSort").addEventListener("change",()=>{ if(dashDiv) renderDashSections(); });
 document.getElementById("shQR").addEventListener("change",e=>{
   document.getElementById("qrWrap").classList.toggle("on", e.target.checked);

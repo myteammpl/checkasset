@@ -1167,10 +1167,54 @@ function openSheet(k){
 function closeSheet(){ document.getElementById("sheetBg").classList.remove("on"); document.getElementById("sheet").classList.remove("on"); editingKey=null; }
 
 /* ===== รูปภาพ ===== */
-const PHOTO_MAX_PX = 1024;   // ด้านยาวสุดหลังย่อ (พอเห็นสภาพชำรุดชัด)
-const PHOTO_QUALITY = 0.6;   // คุณภาพ JPEG
+const PHOTO_MAX_PX = 800;   // ด้านยาวสุดหลังย่อ (พอเห็นสภาพชำรุดชัด)
+const PHOTO_QUALITY = 0.52;   // คุณภาพ JPEG
 let photoData = null;        // dataURL รูปใหม่ที่จะส่ง (null = ไม่เปลี่ยน)
 let photoUrlCur = "";        // ลิงก์รูปเดิมที่มีอยู่แล้ว
+
+// ===== Background Photo Upload Queue (v13) =====
+const K_PHOTO_QUEUE = "assetcount_2026_photo_queue_v13";
+let photoQueue = [];
+let photoUploading = false;
+(function(){ try{ photoQueue=JSON.parse(localStorage.getItem(K_PHOTO_QUEUE)||"[]"); }catch(e){ photoQueue=[]; } })();
+function persistPhotoQueue(){
+  try{ localStorage.setItem(K_PHOTO_QUEUE, JSON.stringify(photoQueue)); }catch(e){}
+  updatePhotoQueueBadge();
+}
+function updatePhotoQueueBadge(){
+  let el=document.getElementById("photoQueueStatus");
+  if(!el){
+    el=document.createElement("div"); el.id="photoQueueStatus";
+    el.style.cssText="position:fixed;right:14px;bottom:14px;z-index:9990;padding:9px 13px;border-radius:999px;background:#203126;color:#fff;font-size:12px;font-weight:800;box-shadow:0 6px 20px rgba(0,0,0,.14);display:none";
+    document.body.appendChild(el);
+  }
+  if(photoQueue.length){ el.style.display=""; el.textContent="📷 กำลังอัปโหลดรูป "+photoQueue.length+" รายการ"; }
+  else el.style.display="none";
+}
+function enqueuePhotoUpload(x, rec, payload){
+  if(!payload.photo) return;
+  photoQueue.push({id:keyOf(x), rec:rec, payload:payload, createdAt:Date.now()});
+  persistPhotoQueue(); processPhotoQueue();
+}
+async function processPhotoQueue(){
+  if(photoUploading || !photoQueue.length || !webAppUrl || !navigator.onLine) return;
+  photoUploading=true;
+  while(photoQueue.length && navigator.onLine){
+    const item=photoQueue[0];
+    try{
+      const res=await fetch(webAppUrl,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify({rows:[item.payload]})});
+      const data=await res.json();
+      if(!(data&&data.ok)) throw new Error((data&&data.error)||"อัปโหลดไม่สำเร็จ");
+      if(data.photo_url && results[item.id]){
+        results[item.id].photo=data.photo_url; persist();
+      }
+      photoQueue.shift(); persistPhotoQueue();
+    }catch(e){ break; }
+  }
+  photoUploading=false; updatePhotoQueueBadge();
+}
+window.addEventListener("online",()=>setTimeout(processPhotoQueue,300));
+
 
 function driveId(url){
   const m=String(url||"").match(/\/d\/([a-zA-Z0-9_-]{10,})/) || String(url||"").match(/[?&]id=([a-zA-Z0-9_-]{10,})/);
@@ -1306,40 +1350,40 @@ async function saveToCloud(x, rec){
   const key=keyOf(x);
   const btn=document.querySelector(".btn-save");
   const oldTxt=btn?btn.textContent:"บันทึกผลนับ";
-  if(btn){ btn.disabled=true; btn.textContent = photoData ? "กำลังอัปโหลดรูป..." : "กำลังบันทึก..."; }
-  setSync("", photoData ? "กำลังอัปโหลดรูปและบันทึก..." : "กำลังบันทึกขึ้นศูนย์กลาง...");
+  if(btn){ btn.disabled=true; btn.textContent="กำลังบันทึกผลนับ..."; }
+
+  const payload=buildPayload(x, rec);
+  const photoForQueue=payload.photo||"";
+  payload.photo=""; // บันทึกข้อมูลก่อน ไม่รอรูป
+
   try{
-    const res=await fetch(webAppUrl,{ method:"POST",
+    const res=await fetch(webAppUrl,{
+      method:"POST",
       headers:{"Content-Type":"text/plain;charset=utf-8"},
-      body:JSON.stringify({rows:[buildPayload(x, rec)]}) });
+      body:JSON.stringify({rows:[payload]})
+    });
     const data=await res.json();
     if(!(data&&data.ok)) throw new Error((data&&data.error)||"ไม่สำเร็จ");
-    if(data.photo_url) rec.photo=data.photo_url;   // ลิงก์รูปที่เพิ่งอัปโหลด
-    results[key]=rec;                 // เก็บเฉพาะเมื่อขึ้น Sheet สำเร็จแล้วเท่านั้น
-    persist();
+
+    const savedRec=Object.assign({},rec,{photo:photoUrlCur||""});
+    results[key]=savedRec; persist();
+
+    if(photoForQueue){
+      enqueuePhotoUpload(x,savedRec,Object.assign({},payload,{photo:photoForQueue}));
+    }
+
     closeSheet(); render(); updateStats();
     if(!document.getElementById("pageDash").classList.contains("hide")) renderDash();
-    setSync("on","บันทึกขึ้นศูนย์กลางแล้ว");
-    toast("บันทึกแล้ว ✓");
+
+    setSync("on",photoForQueue?"บันทึกผลนับแล้ว · รูปกำลังอัปโหลดเบื้องหลัง":"บันทึกขึ้นศูนย์กลางแล้ว");
+    toast(photoForQueue?"✓ บันทึกผลนับแล้ว · รูปกำลังอัปโหลด":"✓ บันทึกผลนับแล้ว");
   }catch(err){
     setSync("err","บันทึกไม่สำเร็จ");
-    alert("บันทึกไม่สำเร็จ — เชื่อมต่อศูนย์กลางไม่ได้\n\n"
-      +"⚠️ ผลนับรายการนี้ยังไม่ถูกบันทึก\n\n"
-      +"กรุณาตรวจสัญญาณอินเทอร์เน็ต แล้วกด \"บันทึกผลนับ\" อีกครั้ง");
-  }finally{
+    toast("บันทึกไม่สำเร็จ: "+(err.message||err));
     if(btn){ btn.disabled=false; btn.textContent=oldTxt; }
   }
 }
-function buildPayload(x, rec){
-  const q=rec.q||{};
-  return { asset:x.a, sub:x.sub||"0", sn:x.sn||"", desc:x.d||"", div:x.div||"", sec:x.sec||"",
-           cc:x.cc||"", qsap:x.q,
-           q1:q[1]||0, q2:q[2]||0, q3:q[3]||0, q4:q[4]||0, q5:q[5]||0, q6:q[6]||0,
-           qty:rec.qty||0, note:rec.note||"", qr:(rec.qr?1:0),
-           photo: (photoData||""),           // ส่งรูปใหม่ (ว่าง = ไม่เปลี่ยน)
-           photo_clear: (!photoData && !photoUrlCur) ? 1 : 0,
-           by:counterName, at:rec.at, device:deviceId };
-}
+
 /* สรุปสถานะของรายการ (ใช้แสดงป้าย) */
 function statusSummary(rec){
   const q=rec.q||{}; const out=[];
@@ -1621,7 +1665,7 @@ function saveSetup(){
   s.textContent="บันทึกแล้ว ✓ "+(webAppUrl?"พร้อมส่งเข้าศูนย์กลาง":"(ยังไม่ใส่ URL — เก็บในเครื่องอย่างเดียว)");
   updateResultInfo();
 }
-const APP_CODE_VERSION="12";   // ต้องตรงกับ CODE_VERSION ใน Code.gs
+const APP_CODE_VERSION="13";   // ต้องตรงกับ CODE_VERSION ใน Code.gs
 
 async function testConnection(){
   const url=document.getElementById("inpUrl").value.trim();

@@ -54,6 +54,15 @@
     background:#fff; font-size:13px; font-weight:600; color:var(--ink); cursor:pointer; white-space:nowrap; transition:.15s;}
   .chip.on{background:var(--field); border-color:var(--field); color:#fff}
   .chip.amber.on{background:var(--amber); border-color:var(--amber)}
+  /* แถวปุ่มย่อย "มีประเด็น" แยกตามประเภท */
+  .issue-chips{padding:2px 0 4px}
+  .issue-chips:empty{display:none}
+  .issue-chips .chip{padding:6px 12px;font-size:12px;border-color:#e6cf9a;background:#fff9ef;
+    display:inline-flex;align-items:baseline;gap:6px}
+  .issue-chips .chip.on{background:var(--amber);border-color:var(--amber);color:#fff}
+  .issue-chips .chip .cnt{font-weight:800}
+  .issue-chips .chip .bv{font-size:10.5px;font-weight:700;opacity:.72}
+  .issue-chips .chip.on .bv{opacity:.92;color:#fff}
   .subfilter{display:flex; gap:8px; overflow-x:auto; padding:0 0 6px; scrollbar-width:none}
   .subfilter::-webkit-scrollbar{display:none}
   .subfilter select{flex:1; min-width:0; padding:10px 12px; font-size:14px; border:1.5px solid var(--line);
@@ -550,6 +559,7 @@
       <div class="chip amber" data-f="issue">มีประเด็น</div>
       <div class="chip" data-f="qr">ต้องติด QR</div>
     </div>
+    <div class="chips issue-chips" id="issueChips"></div>
     <div class="subfilter">
       <select id="fDiv"><option value="">ทุกด้าน</option></select>
       <select id="fSec"><option value="">ทุกแผนก</option></select>
@@ -1268,6 +1278,10 @@ function matchFilter(x){
   if(curFilter==="todo"&&r) return false;
   if(curFilter==="done"&&!r) return false;
   if(curFilter==="issue"&&!(r&&hasIssue(r))) return false;
+  if(curFilter.indexOf("issue:")===0){
+    const sid=Number(curFilter.split(":")[1]||0);
+    if(!(r && Number((r.q||{})[sid]||0)>0)) return false;
+  }
   if(curFilter==="qr"&&!(r&&r.qr)) return false;
   if(curDiv){ const d=x.div||"(ไม่ระบุด้าน)"; if(d!==curDiv) return false; }
   if(curSec&&x.sec!==curSec) return false;
@@ -1276,9 +1290,48 @@ function matchFilter(x){
          (x.sn||"").toLowerCase().includes(q)||(x.cc||"").toLowerCase().includes(q))) return false; }
   return true;
 }
+/* ตัวเลขเงินแบบย่อสำหรับชิป เช่น ฿1.2M / ฿850K */
+function moneyShort(n){
+  n=Number(n)||0;
+  if(n>=1e6) return "฿"+(n/1e6).toFixed(n>=1e7?0:1)+"M";
+  if(n>=1e3) return "฿"+Math.round(n/1e3)+"K";
+  return "฿"+money(n);
+}
+/* อยู่ในขอบเขตที่กรอง (ด้าน/แผนก/ค้นหา) — ไม่รวมตัวกรองสถานะ ใช้คำนวณตัวเลขบนชิป */
+function inScopeForChips(x){
+  if(curDiv){ const d=x.div||"(ไม่ระบุด้าน)"; if(d!==curDiv) return false; }
+  if(curSec&&x.sec!==curSec) return false;
+  if(curSearch){ const q=curSearch.toLowerCase();
+    if(!((x.a||"").toLowerCase().includes(q)||(x.d||"").toLowerCase().includes(q)||
+         (x.sn||"").toLowerCase().includes(q)||(x.cc||"").toLowerCase().includes(q))) return false; }
+  return true;
+}
+/* สร้างปุ่มย่อย "มีประเด็น" แยกตามประเภท พร้อมจำนวนรายการ + BV รวม */
+function renderIssueChips(){
+  const box=document.getElementById("issueChips"); if(!box) return;
+  const agg={}; ISSUE_STATUSES.forEach(id=>agg[id]={n:0,bv:0});
+  for(const x of ASSETS){
+    if(!inScopeForChips(x)) continue;
+    const r=results[keyOf(x)]; if(!r) continue;
+    const q=r.q||{}, bv=Number(x.bv)||0;
+    ISSUE_STATUSES.forEach(id=>{ if(Number(q[id]||0)>0){ agg[id].n++; agg[id].bv+=bv; } });
+  }
+  let html="";
+  ISSUE_STATUSES.forEach(id=>{
+    if(agg[id].n===0) return;
+    const st=STATUSES.find(s=>s.id===id); if(!st) return;
+    const f="issue:"+id;
+    html+='<div class="chip'+(curFilter===f?" on":"")+'" data-f="'+f+'">'
+      +'<span>'+esc(st.label.replace("สินทรัพย์",""))+'</span>'
+      +'<span class="cnt">'+agg[id].n+'</span>'
+      +'<span class="bv">'+moneyShort(agg[id].bv)+'</span></div>';
+  });
+  box.innerHTML=html;
+}
 const MAX_RENDER=300;
 function render(){
   const list=document.getElementById("list");
+  renderIssueChips();
   const filtered=ASSETS.filter(matchFilter);
   document.getElementById("shownCount").textContent=filtered.length.toLocaleString();
   document.getElementById("jumpHint").textContent = filtered.length>MAX_RENDER ? ("แสดง "+MAX_RENDER+" แรก · พิมพ์ค้นหาเพื่อแคบผล") : "";
@@ -2045,7 +2098,7 @@ function saveSetup(){
   s.textContent="บันทึกแล้ว ✓ "+(webAppUrl?"พร้อมส่งเข้าศูนย์กลาง":"(ยังไม่ใส่ URL — เก็บในเครื่องอย่างเดียว)");
   updateResultInfo();
 }
-const APP_CODE_VERSION="16";   // เลขอ้างอิงเฉยๆ — ไม่ได้ใช้บล็อกการทำงานแล้ว
+const APP_CODE_VERSION="17";   // เลขอ้างอิงเฉยๆ — ไม่ได้ใช้บล็อกการทำงานแล้ว
 
 /* ความสามารถที่ระบบต้องมี (เช็กแทนการเทียบเลขเวอร์ชัน)
    ทำให้ Code.gs กับหน้าเว็บคนละเลขเวอร์ชันก็ใช้งานร่วมกันได้
@@ -2136,8 +2189,13 @@ function toast(msg){ const t=document.getElementById("toast"); t.textContent=msg
 // events
 document.getElementById("statusChips").addEventListener("click",e=>{
   const c=e.target.closest(".chip"); if(!c) return;
-  document.querySelectorAll("#statusChips .chip").forEach(x=>x.classList.remove("on"));
+  document.querySelectorAll("#statusChips .chip, #issueChips .chip").forEach(x=>x.classList.remove("on"));
   c.classList.add("on"); curFilter=c.dataset.f; render();
+});
+document.getElementById("issueChips").addEventListener("click",e=>{
+  const c=e.target.closest(".chip"); if(!c) return;
+  document.querySelectorAll("#statusChips .chip").forEach(x=>x.classList.remove("on"));
+  curFilter=c.dataset.f; render();   // render() จะสร้างชิปใหม่พร้อมไฮไลต์ตัวที่เลือก
 });
 let searchTimer=null;
 document.getElementById("search").addEventListener("input",e=>{ clearTimeout(searchTimer);

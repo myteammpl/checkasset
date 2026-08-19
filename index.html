@@ -150,7 +150,8 @@
   .pbtn:active{background:#dceade}
   .ppreview img{width:100%;max-height:230px;object-fit:cover;border-radius:10px;display:block;border:1px solid var(--line)}
   .pacts{display:flex;gap:10px;align-items:center;margin-top:8px}
-  .plink{flex:1;font-size:13px;font-weight:700;color:var(--blue);text-decoration:none}
+  .plink{font-size:13px;font-weight:700;color:var(--blue);text-decoration:none}
+  .pacts{flex-wrap:wrap}
   .pdel{border:1.5px solid #e0b4b4;background:#fff;color:var(--red);font-size:13px;font-weight:700;
     padding:8px 14px;border-radius:9px;cursor:pointer}
   .puploading{font-size:13px;color:var(--amber);font-weight:700;margin-top:6px}
@@ -513,7 +514,8 @@
     <div class="ppreview hide" id="pPreview">
       <img id="pImg" alt="รูปตรวจนับ">
       <div class="pacts">
-        <a id="pOpen" href="#" target="_blank" rel="noopener" class="plink hide">เปิดดูรูปเต็ม</a>
+        <a id="pOpen" href="#" target="_blank" rel="noopener" class="plink hide">🔍 เปิดดูรูปเต็ม</a>
+        <a id="pDown" href="#" target="_blank" rel="noopener" class="plink hide">⬇︎ ดาวน์โหลด</a>
         <button type="button" class="pdel" onclick="clearPhoto()">🗑 ลบรูป</button>
       </div>
     </div>
@@ -921,6 +923,19 @@ const PHOTO_QUALITY = 0.6;   // คุณภาพ JPEG
 let photoData = null;        // dataURL รูปใหม่ที่จะส่ง (null = ไม่เปลี่ยน)
 let photoUrlCur = "";        // ลิงก์รูปเดิมที่มีอยู่แล้ว
 
+function driveId(url){
+  const m=String(url||"").match(/\/d\/([a-zA-Z0-9_-]{10,})/) || String(url||"").match(/[?&]id=([a-zA-Z0-9_-]{10,})/);
+  return m?m[1]:"";
+}
+function driveThumb(url){
+  const id=driveId(url);
+  return id ? ("https://drive.google.com/thumbnail?id="+id+"&sz=w1000") : "";
+}
+function driveDownload(url){
+  const id=driveId(url);
+  return id ? ("https://drive.google.com/uc?export=download&id="+id) : url;
+}
+
 function setPhotoUI(){
   const prev=document.getElementById("pPreview");
   const img=document.getElementById("pImg");
@@ -928,18 +943,30 @@ function setPhotoUI(){
   const open=document.getElementById("pOpen");
   const body=document.getElementById("pBody");
   if(photoData){
-    img.src=photoData; prev.classList.remove("hide"); body.classList.add("hide");
+    img.src=photoData; img.style.display=""; prev.classList.remove("hide"); body.classList.add("hide");
     open.classList.add("hide");
+    const dl0=document.getElementById("pDown"); if(dl0) dl0.classList.add("hide");
     hint.textContent="รูปใหม่ (จะอัปโหลดตอนบันทึก)"; hint.classList.add("on");
   } else if(photoUrlCur){
-    // มีรูปเดิมอยู่แล้ว — แสดงลิงก์ (ไม่โหลดรูปมาแสดง เพื่อไม่ให้เปลืองเน็ต)
+    // มีรูปเดิม -> โหลดรูปย่อจาก Drive มาแสดง
     prev.classList.remove("hide"); body.classList.remove("hide");
-    img.removeAttribute("src"); img.style.display="none";
+    img.style.display="";
+    const t=driveThumb(photoUrlCur);
+    hint.textContent="กำลังโหลดรูป..."; hint.classList.add("on");
+    img.onload=()=>{ document.getElementById("pHint").textContent="มีรูปแล้ว"; };
+    img.onerror=()=>{
+      img.style.display="none";
+      document.getElementById("pHint").textContent="มีรูป (กดเปิดดู)";
+    };
+    img.src = t || photoUrlCur;
     open.href=photoUrlCur; open.classList.remove("hide");
-    hint.textContent="มีรูปแล้ว"; hint.classList.add("on");
+    const dl=document.getElementById("pDown");
+    if(dl){ dl.href=driveDownload(photoUrlCur); dl.classList.remove("hide"); }
   } else {
     prev.classList.add("hide"); body.classList.remove("hide");
-    img.style.display=""; hint.textContent="ยังไม่มีรูป"; hint.classList.remove("on");
+    img.style.display=""; img.removeAttribute("src");
+    const dl1=document.getElementById("pDown"); if(dl1) dl1.classList.add("hide");
+    hint.textContent="ยังไม่มีรูป"; hint.classList.remove("on");
   }
 }
 function clearPhoto(){
@@ -1316,7 +1343,7 @@ function saveSetup(){
   s.textContent="บันทึกแล้ว ✓ "+(webAppUrl?"พร้อมส่งเข้าศูนย์กลาง":"(ยังไม่ใส่ URL — เก็บในเครื่องอย่างเดียว)");
   updateResultInfo();
 }
-const APP_CODE_VERSION="8";   // ต้องตรงกับ CODE_VERSION ใน Code.gs
+const APP_CODE_VERSION="9";   // ต้องตรงกับ CODE_VERSION ใน Code.gs
 
 async function testConnection(){
   const url=document.getElementById("inpUrl").value.trim();

@@ -330,9 +330,87 @@
   .upload-note{font-size:12px; color:var(--grey); max-width:360px; line-height:1.7; margin-top:8px}
   .parsing{font-size:15px; font-weight:700; color:var(--field-dark); margin-top:16px}
   .reload-mini{position:fixed; top:0; right:0; padding:10px; z-index:5}
+
+  /* ===== First-load loading UI ===== */
+  .boot-loading{
+    position:fixed; inset:0; z-index:99999;
+    display:flex; align-items:center; justify-content:center;
+    background:rgba(248,246,239,.98);
+    backdrop-filter:blur(4px);
+    transition:opacity .28s ease, visibility .28s ease;
+  }
+  .boot-loading.hide{
+    opacity:0; visibility:hidden; pointer-events:none;
+  }
+  .boot-card{
+    width:min(390px,calc(100vw - 40px));
+    text-align:center;
+    padding:30px 24px 28px;
+    border:1px solid rgba(44,90,64,.10);
+    border-radius:20px;
+    background:rgba(255,255,255,.92);
+    box-shadow:0 18px 55px rgba(44,55,45,.10);
+  }
+  .boot-spinner{
+    width:48px; height:48px; margin:0 auto 18px;
+    border:4px solid #e6e1d6;
+    border-top-color:#2c5a40;
+    border-right-color:#8fd6a6;
+    border-radius:50%;
+    animation:bootSpin .85s linear infinite;
+  }
+  @keyframes bootSpin{to{transform:rotate(360deg)}}
+  .boot-title{
+    font-size:19px; font-weight:800; color:#203126;
+    margin-bottom:8px;
+  }
+  .boot-text{
+    font-size:14px; font-weight:700; color:#2c5a40;
+    line-height:1.6;
+  }
+  .boot-sub{
+    margin-top:7px; font-size:12px; color:#8b8a82; line-height:1.6;
+  }
+  #bootRetry{
+    margin-top:18px;
+    width:100%;
+    border:0;
+    border-radius:12px;
+    padding:12px 16px;
+    background:#2c5a40;
+    color:#fff;
+    font-size:14px;
+    font-weight:800;
+    cursor:pointer;
+    box-shadow:0 6px 16px rgba(44,90,64,.18);
+  }
+  #bootRetry:disabled{opacity:.65;cursor:default}
+  .boot-dots::after{
+    content:"";
+    display:inline-block; width:1.1em; text-align:left;
+    animation:bootDots 1.2s steps(4,end) infinite;
+  }
+  @keyframes bootDots{
+    0%{content:""}
+    25%{content:"."}
+    50%{content:".."}
+    75%,100%{content:"..."}
+  }
+
 </style>
 </head>
 <body>
+
+<!-- ===== FIRST LOAD OVERLAY ===== -->
+<div id="bootLoading" class="boot-loading">
+  <div class="boot-card">
+    <div class="boot-spinner" aria-hidden="true"></div>
+    <div class="boot-title">กำลังเตรียมระบบ</div>
+    <div class="boot-text">รอสักครู่ กำลังเชื่อมต่อศูนย์กลาง...</div>
+    <div class="boot-sub">กำลังโหลดรายชื่อผู้ตรวจนับและข้อมูลล่าสุด</div>
+  </div>
+</div>
+
 
 <!-- ===== UPLOAD SCREEN (first run) ===== -->
 <div id="uploadScreen" class="upload-wrap">
@@ -590,7 +668,7 @@
    ใส่แล้วทุกคนเปิดเว็บใช้ได้เลย ไม่ต้องตั้งค่าอะไร
    ถ้าเว้นว่าง ("") ระบบจะให้ผู้ใช้กรอก URL เอง
    ============================================================ */
-const BUILT_IN_URL = "https://script.google.com/macros/s/AKfycbxlN8woJvlwsxUCPigJ1GukYFc0G9XAb82S92V5N2WeAGA-MNUDOgeh1YWEdjjv4MYgyA/exec";
+const BUILT_IN_URL = "https://script.google.com/macros/s/AKfycbxPZ0MnVOrQg1jreR8lMZuXZXQroXd79tWPXGmVSfRRqqsHMsrfdr66iXF9JNRdbE6QXA/exec";
 
 const STATUSES = [
   {id:1, label:"สินทรัพย์ใช้งาน", cls:"s1"},
@@ -659,97 +737,124 @@ function cleanStr(v){
 <script>
 let curFilter="all", curDiv="", curSec="", curSearch="", editingKey=null, editingStatus=null;
 
+
+let bootTimer=null;
+let bootRetrying=false;
+const BOOT_TIMEOUT_MS=8000;
+
+function showBootLoading(title, text, sub){
+  const el=document.getElementById("bootLoading");
+  if(!el) return;
+  const t=el.querySelector(".boot-title");
+  const x=el.querySelector(".boot-text");
+  const s=el.querySelector(".boot-sub");
+  if(t && title) t.textContent=title;
+  if(x && text) x.innerHTML=text;
+  if(s && sub) s.textContent=sub;
+  el.classList.remove("hide");
+  clearTimeout(bootTimer);
+  bootTimer=setTimeout(showBootTimeout, BOOT_TIMEOUT_MS);
+}
+function hideBootLoading(){
+  clearTimeout(bootTimer);
+  bootTimer=null;
+  const el=document.getElementById("bootLoading");
+  if(el) el.classList.add("hide");
+}
+function showBootTimeout(){
+  const el=document.getElementById("bootLoading");
+  if(!el) return;
+  const t=el.querySelector(".boot-title");
+  const x=el.querySelector(".boot-text");
+  const s=el.querySelector(".boot-sub");
+  if(t) t.textContent="เชื่อมต่อใช้เวลานานกว่าปกติ";
+  if(x) x.innerHTML="ศูนย์กลางยังไม่ตอบกลับ";
+  if(s) s.textContent="ตรวจสอบอินเทอร์เน็ตหรือ Google Sheet แล้วลองใหม่อีกครั้ง";
+  const card=el.querySelector(".boot-card");
+  if(card && !document.getElementById("bootRetry")){
+    const b=document.createElement("button");
+    b.id="bootRetry";
+    b.type="button";
+    b.textContent="↻  ลองเชื่อมต่ออีกครั้ง";
+    b.onclick=()=>{ b.disabled=true; b.textContent="กำลังลองใหม่..."; startScreen(true); };
+    card.appendChild(b);
+  }
+}
+
 /* ===== หน้าแรก: เลือกชื่อผู้ตรวจนับ ===== */
-async function startScreen(){
+async function startScreen(isRetry=false){
   const box=document.getElementById("nameList");
   const st=document.getElementById("nameStatus");
   if(!webAppUrl){   // ไม่ได้ฝัง URL -> ให้กรอกเอง
+    hideBootLoading();
     document.getElementById("stepName").classList.add("hide");
     document.getElementById("stepUrl").classList.remove("hide");
     return;
   }
+
+  if(isRetry) bootRetrying=true;
+  const retryBtn=document.getElementById("bootRetry");
+  if(retryBtn){
+    retryBtn.remove();
+  }
+
+  showBootLoading(
+    "กำลังเตรียมระบบ",
+    'กำลังเชื่อมต่อศูนย์กลาง<span class="boot-dots"></span>',
+    "กำลังโหลดรายชื่อผู้ตรวจนับและข้อมูลล่าสุด"
+  );
   box.innerHTML='<div class="nameloading">กำลังโหลดรายชื่อผู้ตรวจนับ...</div>';
+  st.classList.add("hide");
+
+  const controller = new AbortController();
+  const timer=setTimeout(()=>controller.abort(), BOOT_TIMEOUT_MS);
+
   try{
-    const res=await fetch(webAppUrl+(webAppUrl.includes("?")?"&":"?")+"action=users&t="+Date.now());
+    const res=await fetch(
+      webAppUrl+(webAppUrl.includes("?")?"&":"?")+"action=users&t="+Date.now(),
+      {signal:controller.signal, cache:"no-store"}
+    );
+    clearTimeout(timer);
+
+    if(!res.ok) throw new Error("HTTP "+res.status);
     const data=await res.json();
     if(!(data && Array.isArray(data.users))) throw new Error("no-users");
+
     USERS=data.users;
     localStorage.setItem("assetcount_2026_users", JSON.stringify(USERS));
+
     if(!USERS.length){
+      hideBootLoading();
       box.innerHTML="";
       st.classList.remove("hide"); st.classList.add("err");
       st.innerHTML="ยังไม่มีรายชื่อผู้ตรวจนับในศูนย์กลาง<br>"
         +"ให้ผู้ดูแลเพิ่มชื่อในชีต \"ผู้ตรวจนับ\" ของ Google Sheet ก่อน";
       return;
     }
+
+    hideBootLoading();
     box.innerHTML = USERS.map(u=>
       '<button class="namebtn" onclick="pickName(\''+String(u).replace(/'/g,"\\'")+'\')">'
       +'<span class="av">'+esc(String(u).trim().charAt(0).toUpperCase())+'</span>'
       +'<span>'+esc(u)+'</span></button>').join("");
+
   }catch(e){
+    clearTimeout(timer);
     box.innerHTML="";
+    hideBootLoading();
+
     st.classList.remove("hide"); st.classList.add("err");
-    st.innerHTML="เชื่อมต่อศูนย์กลางไม่ได้<br>ตรวจสัญญาณอินเทอร์เน็ต แล้วลองเปิดใหม่อีกครั้ง";
-  }
-}
-
-/* เลือกชื่อแล้วโหลดรายการต่อ */
-async function pickName(name){
-  counterName=String(name);
-  localStorage.setItem(K_NAME, counterName);
-  const box=document.getElementById("nameList");
-  box.innerHTML='<div class="nameloading">สวัสดี '+esc(counterName)+' · กำลังโหลดรายการตรวจนับ...</div>';
-  const saved=(()=>{ try{ return JSON.parse(localStorage.getItem(K_ASSETS)||"null"); }catch(e){ return null; } })();
-  if(saved && saved.length){
-    ASSETS=saved;
-    if(counterName) enterApp(); else showNameScreen();
-    return;
-  }
-  await loadFromCloud();
-}
-
-/* กรณีต้องกรอก URL เอง */
-async function startWithUrl(){
-  const inp=document.getElementById("startUrl");
-  const url=(inp && inp.value.trim())||"";
-  if(!url){ toast("กรุณาวาง URL ศูนย์กลางก่อน"); return; }
-  webAppUrl=url; localStorage.setItem(K_URL,url);
-  document.getElementById("stepUrl").classList.add("hide");
-  document.getElementById("stepName").classList.remove("hide");
-  startScreen();
-}
-
-/* ===== โหลดรายการจากศูนย์กลาง ===== */
-async function loadFromCloud(){
-  const info=document.getElementById("cloudInfo");
-  info.classList.remove("hide","err");
-  const inp=document.getElementById("startUrl");
-  let url=(inp && inp.value.trim()) || webAppUrl;
-  if(!url){ info.classList.add("err"); info.textContent="กรุณาวาง URL ศูนย์กลางก่อน"; return; }
-  webAppUrl=url; localStorage.setItem(K_URL,url);
-  info.textContent="กำลังเชื่อมต่อศูนย์กลาง...";
-  try{
-    const res=await fetch(url+(url.includes("?")?"&":"?")+"action=assets&t="+Date.now());
-    const data=await res.json();
-    if(!(data&&data.ok)) throw new Error("รูปแบบข้อมูลผิด");
-    const rows=data.rows||[];
-    if(!rows.length){
-      info.classList.add("err");
-      info.innerHTML="ยังไม่มีรายการในศูนย์กลาง<br>ให้ผู้ดูแลวางข้อมูลในชีต \"รายการตรวจนับ\" ของ Google Sheet ก่อน";
-      return;
+    if(e && e.name==="AbortError"){
+      st.innerHTML="เชื่อมต่อศูนย์กลางนานเกินไป (เกิน 8 วินาที)<br>"
+        +"ข้อมูลผลตรวจนับเดิมจะไม่ถูกลบ — ลองเชื่อมต่อใหม่ได้";
+    }else{
+      st.innerHTML="เชื่อมต่อศูนย์กลางไม่ได้<br>"
+        +"ตรวจสัญญาณอินเทอร์เน็ต แล้วลองใหม่อีกครั้ง";
     }
-    ASSETS=rows.map(r=>({a:String(r.a),sub:String(r.sub||"0"),sn:r.sn||"",d:r.d||"",
-      div:r.div||"",sec:r.sec||"",cc:r.cc||"",q:Number(r.q)||0,ps:r.ps||"",pn:r.pn||""}));
-    try{
-      localStorage.setItem(K_ASSETS, JSON.stringify(ASSETS));
-      localStorage.setItem(K_META, JSON.stringify({file:"(โหลดจากศูนย์กลาง)",
-        at:new Date().toISOString(), count:ASSETS.length, src:"cloud", ver:data.ver||""}));
-    }catch(err){ info.classList.add("err"); info.textContent="บันทึกลงเครื่องไม่สำเร็จ: "+err; return; }
-    info.textContent="สำเร็จ! ได้รายการ "+ASSETS.length.toLocaleString()+" รายการ";
-    setTimeout(()=>{ counterName ? enterApp() : showNameScreen(); }, 400);
-  }catch(err){
-    info.classList.add("err");
-    info.innerHTML="เชื่อมต่อไม่ได้ — ตรวจ URL และสัญญาณอินเทอร์เน็ต";
+    // ให้ overlay แสดงสถานะ timeout พร้อมปุ่ม retry
+    showBootTimeout();
+  }finally{
+    bootRetrying=false;
   }
 }
 
@@ -766,6 +871,7 @@ function showNameScreen(){
 function changeCounter(){ showNameScreen(); }
 
 function enterApp(){
+  hideBootLoading();
   document.getElementById("uploadScreen").classList.add("hide");
   document.getElementById("app").classList.remove("hide");
   document.getElementById("inpUrl").value=webAppUrl;
@@ -1387,6 +1493,16 @@ async function pullRemote(manual){
     const res=await fetch(webAppUrl+(webAppUrl.includes("?")?"&":"?")+"action=pull&t="+Date.now());
     const data=await res.json();
     if(!(data&&data.ok)) throw new Error("รูปแบบข้อมูลผิด");
+    // ป้องกันกรณีศูนย์กลางตอบกลับเป็นชีตหาย/ว่างชั่วคราว:
+    // ห้ามล้างผลตรวจนับที่มีอยู่ในเครื่องจาก response ที่ผิดปกติ
+    if(data.sheet_exists === false){
+      if(manual){
+        setSync("err","ไม่พบชีตผลตรวจนับ");
+        toast('ไม่พบชีต "ผลตรวจนับ" — ไม่ล้างข้อมูลเดิมในเครื่อง');
+      }
+      return;
+    }
+
     let added=0, updated=0; const fresh={};
     for(const r of (data.rows||[])){
       const k=String(r.asset)+"|"+String(r.sub||"0");
@@ -1398,7 +1514,19 @@ async function pullRemote(manual){
                      at:r.at||"", by:r.by||"" };
       fresh[k]=remote; added++;
     }
-    results=fresh;   // Sheet เป็นแหล่งข้อมูลเดียว — ลบที่ไม่มีใน Sheet ออกด้วย
+
+    // สำคัญ: ถ้า Sheet มีอยู่จริงแต่ยังไม่มีข้อมูล ให้คงผลตรวจนับในเครื่องไว้
+    // เพื่อป้องกันการกด refresh แล้วหน้าจอถูกล้างเพราะ response ว่างชั่วคราว
+    if((data.rows||[]).length===0 && Object.keys(results||{}).length>0){
+      if(manual){
+        setSync("warn","ศูนย์กลางยังไม่ส่งผลนับ — คงข้อมูลเดิมไว้");
+        toast("ศูนย์กลางยังไม่มีผลนับ · ไม่ล้างข้อมูลเดิม");
+      }
+      updateResultInfo();
+      return;
+    }
+
+    results=fresh;
     persist(); render(); updateStats();
     if(!document.getElementById("pageDash").classList.contains("hide")) renderDash();
     lastPullAt=new Date();
@@ -1493,7 +1621,7 @@ function saveSetup(){
   s.textContent="บันทึกแล้ว ✓ "+(webAppUrl?"พร้อมส่งเข้าศูนย์กลาง":"(ยังไม่ใส่ URL — เก็บในเครื่องอย่างเดียว)");
   updateResultInfo();
 }
-const APP_CODE_VERSION="9";   // ต้องตรงกับ CODE_VERSION ใน Code.gs
+const APP_CODE_VERSION="12";   // ต้องตรงกับ CODE_VERSION ใน Code.gs
 
 async function testConnection(){
   const url=document.getElementById("inpUrl").value.trim();
@@ -1512,6 +1640,12 @@ async function testConnection(){
         +"\nศูนย์กลาง: "+(ver||"เก่ามาก (ไม่มีเลขเวอร์ชัน)")+"  ·  แอปต้องการ: "+APP_CODE_VERSION
         +"\n\nวิธีแก้: วาง Code.gs ตัวใหม่ → บันทึก → Deploy → Manage deployments"
         +"\n→ กดดินสอ ✏️ → Version: New version → Deploy";
+      return;
+    }
+    if(data.sheet_exists===false){
+      s.className="status-line warn";
+      s.textContent="เชื่อมต่อสำเร็จ ✓ (Code.gs v"+ver+")"
+        +"\n⚠️ ยังไม่พบชีต \"ผลตรวจนับ\" — ระบบจะไม่สร้างชีตจากการรีเฟรช";
       return;
     }
     s.className="status-line ok";

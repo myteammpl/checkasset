@@ -187,6 +187,28 @@
   .bottomnav button .dot{display:inline-block;min-width:16px;height:16px;line-height:16px;background:var(--amber);
     color:#fff;border-radius:99px;font-size:10px;font-weight:700;padding:0 4px;margin-left:2px;vertical-align:top}
 
+
+  /* ===== TASK / SYNC CENTER ===== */
+  .task-summary{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+  .task-stat{background:#fff;border:1px solid var(--line);border-radius:14px;padding:13px;box-shadow:var(--shadow)}
+  .task-stat .k{font-size:12px;color:var(--grey);font-weight:700}
+  .task-stat .v{font-size:24px;font-weight:800;margin-top:2px}
+  .task-card{background:#fff;border:1px solid var(--line);border-radius:13px;padding:12px 13px;margin-bottom:9px;box-shadow:var(--shadow)}
+  .task-card.ok{border-left:4px solid var(--field)}
+  .task-card.warn{border-left:4px solid var(--amber)}
+  .task-card.err{border-left:4px solid var(--red)}
+  .task-top{display:flex;align-items:center;justify-content:space-between;gap:10px}
+  .task-title{font-size:14px;font-weight:800}
+  .task-status{font-size:11px;font-weight:800;padding:3px 8px;border-radius:99px;white-space:nowrap}
+  .task-status.pending{background:var(--amber-soft);color:var(--amber)}
+  .task-status.uploading{background:#e6eff5;color:var(--blue)}
+  .task-status.done{background:var(--field-soft);color:var(--field-dark)}
+  .task-status.error{background:var(--red-soft);color:var(--red)}
+  .task-meta{font-size:12px;color:var(--grey);margin-top:5px;line-height:1.45}
+  .task-empty{text-align:center;color:var(--grey);padding:30px 18px;background:#fff;border:1px dashed var(--line);border-radius:13px}
+  .task-actions{display:flex;gap:8px;margin-bottom:14px}
+  .task-actions button{flex:1;padding:12px;border-radius:11px;font-size:14px;font-weight:800;cursor:pointer}
+
   .toast{position:fixed; left:50%; bottom:96px; transform:translateX(-50%) translateY(20px); z-index:60;
     background:var(--ink); color:#fff; padding:12px 20px; border-radius:99px; font-size:14px; font-weight:600;
     opacity:0; pointer-events:none; transition:.25s; white-space:nowrap; box-shadow:0 8px 24px rgba(0,0,0,.25); max-width:90vw;}
@@ -568,6 +590,20 @@
   <div class="mini">ผลนับเก็บในเครื่องนี้อัตโนมัติ และส่งเข้า Google Sheet กลางเมื่อมีเน็ต</div>
 </div>
 
+
+<div id="pageTask" class="page hide">
+  <h2>งาน</h2>
+  <div class="task-summary">
+    <div class="task-stat"><div class="k">บันทึกผลนับรอส่ง</div><div class="v" id="taskRecordPending">0</div></div>
+    <div class="task-stat"><div class="k">รูปภาพรออัปโหลด</div><div class="v" id="taskPhotoPending">0</div></div>
+  </div>
+  <div class="task-actions">
+    <button class="btn-ghost" onclick="processSyncQueue();processPhotoQueue();">🔄 ทำงานต่อ</button>
+    <button class="btn-ghost" onclick="clearTaskHistory()">🧹 ล้างประวัติ</button>
+  </div>
+  <div id="taskList"></div>
+</div>
+
 <div id="pageSetup" class="page hide">
   <h2>ตั้งค่า</h2>
   <div class="field-group">
@@ -622,7 +658,7 @@
   <button class="btn-ghost" onclick="refreshAll(true)">🔄 อัปเดตผลตรวจนับจากศูนย์กลาง</button>
   <div class="mini" style="text-align:left;padding:0 2px 0">
     ระบบทำงานแบบออนไลน์ — ผลตรวจนับทั้งหมดอยู่ใน Google Sheet ที่เดียว
-    บันทึกทุกครั้งจะขึ้น Sheet ทันที ถ้าไม่มีเน็ตจะแจ้งเตือนและไม่บันทึก
+    ระบบบันทึกหน้าจอทันที แล้วส่งผลนับขึ้นศูนย์กลางเบื้องหลังผ่านเมนู "งาน"
   </div>
   <div class="mini" style="text-align:left;padding:10px 2px 0">
     เปลี่ยนไฟล์จะล้างรายการสินทรัพย์เดิม แต่<b>ไม่ลบผลนับ</b>ที่ทำไปแล้ว (ผูกตามรหัส Asset)
@@ -676,6 +712,7 @@
   <button class="on" id="navCount" onclick="showPage('count')"><span class="i">✓</span>ตรวจนับ</button>
   <button id="navDash" onclick="showPage('dash')"><span class="i">📈</span>แดชบอร์ด</button>
   <button id="navSummary" onclick="showPage('summary')"><span class="i">📊</span>สรุปผล</button>
+  <button id="navTask" onclick="showPage('task')"><span class="i">☁︎<span class="dot hide" id="taskBadge">0</span></span>งาน</button>
   <button id="navSetup" onclick="showPage('setup')"><span class="i">⚙︎</span>ตั้งค่า</button>
 </div>
 </div><!-- /#app -->
@@ -707,6 +744,80 @@ const K_QUEUE   = "assetcount_2026_queue_v3";
 const K_NAME    = "assetcount_2026_name";
 const K_URL     = "assetcount_2026_url";
 const K_DEVICE  = "assetcount_2026_device";
+
+const K_SYNC_QUEUE = "assetcount_2026_sync_queue_v15";
+const K_TASK_LOG   = "assetcount_2026_task_log_v15";
+let syncQueue = [];
+let taskLog = [];
+let syncWorking = false;
+
+(function loadTaskState(){
+  try{ syncQueue=JSON.parse(localStorage.getItem(K_SYNC_QUEUE)||"[]"); }catch(e){ syncQueue=[]; }
+  try{ taskLog=JSON.parse(localStorage.getItem(K_TASK_LOG)||"[]"); }catch(e){ taskLog=[]; }
+})();
+
+function persistTaskState(){
+  try{
+    localStorage.setItem(K_SYNC_QUEUE, JSON.stringify(syncQueue));
+    localStorage.setItem(K_TASK_LOG, JSON.stringify(taskLog.slice(-30)));
+  }catch(e){}
+  renderTasks();
+}
+
+function taskLogAdd(type, asset, status, message){
+  taskLog.push({type:type, asset:String(asset||""), status:status, message:String(message||""), at:new Date().toISOString()});
+  taskLog=taskLog.slice(-30);
+  persistTaskState();
+}
+
+function taskPendingCount(){
+  let record=syncQueue.length, photo=photoQueue.length;
+  let el=document.getElementById("taskBadge");
+  if(el){
+    const n=record+photo;
+    el.textContent=n>99?"99+":String(n);
+    el.classList.toggle("hide",n===0);
+  }
+  const r=document.getElementById("taskRecordPending");
+  const p=document.getElementById("taskPhotoPending");
+  if(r) r.textContent=record;
+  if(p) p.textContent=photo;
+}
+
+function renderTasks(){
+  taskPendingCount();
+  const box=document.getElementById("taskList");
+  if(!box) return;
+  const rows=[];
+  syncQueue.forEach(q=>{
+    rows.push('<div class="task-card '+(q.error?'err':'warn')+'">'
+      +'<div class="task-top"><div class="task-title">💾 '+esc(q.asset||"รายการ")+'</div>'
+      +'<span class="task-status '+(q.working?'uploading':'pending')+'">'+(q.working?'กำลังบันทึก':'รอส่งผลนับ')+'</span></div>'
+      +'<div class="task-meta">'+esc(q.message||"กำลังรอส่งขึ้นศูนย์กลาง")+'</div></div>');
+  });
+  photoQueue.forEach(q=>{
+    rows.push('<div class="task-card '+(q.error?'err':'warn')+'">'
+      +'<div class="task-top"><div class="task-title">📷 '+esc(q.asset||"รูปภาพ")+'</div>'
+      +'<span class="task-status '+(q.working?'uploading':'pending')+'">'+(q.working?'กำลังอัปโหลด':'รออัปโหลด')+'</span></div>'
+      +'<div class="task-meta">'+esc(q.message||"รูปถูกบันทึกไว้ในคิว")+'</div></div>');
+  });
+  taskLog.slice().reverse().forEach(q=>{
+    const cls=q.status==="done"?"ok":q.status==="error"?"err":"warn";
+    rows.push('<div class="task-card '+cls+'">'
+      +'<div class="task-top"><div class="task-title">'+(q.type==="photo"?"📷":"💾")+' '+esc(q.asset||"งาน")+'</div>'
+      +'<span class="task-status '+(q.status==="done"?"done":q.status==="error"?"error":"pending")+'">'
+      +(q.status==="done"?"สำเร็จ":q.status==="error"?"ผิดพลาด":"สถานะ")+'</span></div>'
+      +'<div class="task-meta">'+esc(q.message||"")+' · '+new Date(q.at).toLocaleTimeString("th-TH")+'</div></div>');
+  });
+  box.innerHTML=rows.length?rows.join(""):'<div class="task-empty">ไม่มีงานค้าง ✓<br><small>ผลนับและรูปภาพทั้งหมดซิงค์เรียบร้อยแล้ว</small></div>';
+}
+
+function clearTaskHistory(){
+  taskLog=[];
+  persistTaskState();
+  toast("ล้างประวัติงานแล้ว");
+}
+
 
 // ชื่อชีต + แถวหัวตาราง (index เริ่ม 0) ที่จะอ่าน
 const SHEET_NAME = "Template รายการตรวจนับสินทรัพย์";
@@ -947,6 +1058,9 @@ function enterApp(){
   buildFilters(); refreshSecDropdown(); render(); updateStats(); updateQueueBadge();
   if(!webAppUrl){ setSync("off","ยังไม่ตั้งค่าศูนย์กลาง (แตะ ตั้งค่า)"); }
   else { refreshAll(false); }
+  renderTasks();
+  processSyncQueue();
+  processPhotoQueue();
   startAutoPull();
 }
 function updateDataInfo(){
@@ -1262,17 +1376,19 @@ function updatePhotoQueueBadge(){
 function enqueuePhotoUpload(x, rec, payload, row){
   if(!payload.photo) return;
   const item={id:keyOf(x), asset:String(x.a), sub:String(x.sub||"0"), row:Number(row||0),
-              rec:rec, payload:payload, createdAt:Date.now()};
+              rec:rec, payload:payload, createdAt:Date.now(), working:false, error:"", message:"รออัปโหลด"};
   // ถ้ามีคิวของรายการเดียวกันอยู่ ให้ใช้รูป/ข้อมูลล่าสุดแทน ไม่ส่งซ้ำ
   const idx=photoQueue.findIndex(q=>q.id===item.id);
   if(idx>=0) photoQueue[idx]=item; else photoQueue.push(item);
-  persistPhotoQueue(); processPhotoQueue();
+  persistPhotoQueue(); processPhotoQueue(); renderTasks();
 }
 async function processPhotoQueue(){
   if(photoUploading || !photoQueue.length || !webAppUrl || !navigator.onLine) return;
   photoUploading=true; updatePhotoQueueBadge();
   while(photoQueue.length && navigator.onLine){
     const item=photoQueue[0];
+    item.working=true; item.error=""; item.message="กำลังอัปโหลดรูปไปยังศูนย์กลาง";
+    persistPhotoQueue(); renderTasks();
     try{
       const res=await fetch(webAppUrl,{
         method:"POST",
@@ -1290,14 +1406,16 @@ async function processPhotoQueue(){
         persist();
       }
       photoQueue.shift(); persistPhotoQueue();
+      taskLogAdd("photo",item.asset,"done","อัปโหลดรูปสำเร็จ");
     }catch(e){
-      // เก็บคิวไว้ ไม่ทำให้ผลตรวจนับหาย
+      item.working=false; item.error=true; item.message="อัปโหลดไม่สำเร็จ · ระบบจะลองใหม่อัตโนมัติ";
+      persistPhotoQueue(); taskLogAdd("photo",item.asset,"error",item.message);
       break;
     }
   }
-  photoUploading=false; updatePhotoQueueBadge();
+  photoUploading=false; updatePhotoQueueBadge(); renderTasks();
 }
-window.addEventListener("online",()=>setTimeout(processPhotoQueue,300));
+window.addEventListener("online",()=>{ setTimeout(processSyncQueue,300); setTimeout(processPhotoQueue,500); });
 
 
 function driveId(url){
@@ -1434,44 +1552,86 @@ function saveCount(){
 }
 
 /* บันทึกขึ้น Google Sheet ทันที — สำเร็จเท่านั้นจึงถือว่าบันทึกแล้ว */
-async function saveToCloud(x, rec){
+function saveToCloud(x, rec){
   const key=keyOf(x);
   const btn=document.querySelector(".btn-save");
-  const oldTxt=btn?btn.textContent:"บันทึกผลนับ";
-  if(btn){ btn.disabled=true; btn.textContent="กำลังบันทึกผลนับ..."; }
-
-  // สำคัญ: รอบแรกส่งเฉพาะข้อมูลผลนับ ไม่ส่งรูป
   const payload=buildPayload(x, rec);
   const photoForQueue=payload.photo||"";
-  payload.photo="";
+  payload.photo=""; // ผลนับใช้คิวแยก ไม่ต้องรอรูป
 
+  // 1) แสดงผลทันทีในเครื่อง
+  results[key]=Object.assign({},rec,{photo:photoUrlCur||""});
+  persist();
+
+  // 2) เข้าคิวส่งผลนับขึ้นศูนย์กลาง
+  enqueueSyncRecord(x, rec, payload, photoForQueue);
+
+  // 3) ปิดรายการทันที — ผู้ตรวจนับไปงานถัดไปได้เลย
+  closeSheet();
+  render(); updateStats();
+  if(!document.getElementById("pageDash").classList.contains("hide")) renderDash();
+
+  setSync("on", photoForQueue ? "บันทึกในเครื่องแล้ว · กำลังซิงค์ผลนับและรูป" : "บันทึกในเครื่องแล้ว · กำลังซิงค์ศูนย์กลาง");
+  toast(photoForQueue ? "✓ บันทึกแล้ว · รูปอยู่ในคิวอัปโหลด" : "✓ บันทึกแล้ว · ส่งศูนย์กลางเบื้องหลัง");
+  renderTasks();
+  processSyncQueue();
+}
+
+/* ===== Background record sync queue ===== */
+function enqueueSyncRecord(x, rec, payload, photoDataForQueue){
+  const item={
+    id:keyOf(x), asset:String(x.a), sub:String(x.sub||"0"), payload:payload,
+    photo:photoDataForQueue||"", createdAt:Date.now(), working:false, error:"",
+    message:"รอส่งผลนับขึ้นศูนย์กลาง"
+  };
+  const idx=syncQueue.findIndex(q=>q.id===item.id);
+  if(idx>=0) syncQueue[idx]=item; else syncQueue.push(item);
+  persistTaskState();
+}
+
+async function processSyncQueue(){
+  if(syncWorking || !syncQueue.length || !webAppUrl || !navigator.onLine) return;
+  syncWorking=true;
   try{
-    const res=await fetch(webAppUrl,{
-      method:"POST",
-      headers:{"Content-Type":"text/plain;charset=utf-8"},
-      body:JSON.stringify({rows:[payload]})
-    });
-    const data=await res.json();
-    if(!(data&&data.ok)) throw new Error((data&&data.error)||"บันทึกไม่สำเร็จ");
+    while(syncQueue.length && navigator.onLine){
+      const item=syncQueue[0];
+      item.working=true; item.error=""; item.message="กำลังบันทึกผลนับขึ้นศูนย์กลาง";
+      persistTaskState();
+      try{
+        const res=await fetch(webAppUrl,{
+          method:"POST",
+          headers:{"Content-Type":"text/plain;charset=utf-8"},
+          body:JSON.stringify({rows:[item.payload]})
+        });
+        const data=await res.json();
+        if(!(data&&data.ok)) throw new Error((data&&data.error)||"บันทึกศูนย์กลางไม่สำเร็จ");
 
-    const savedRec=Object.assign({},rec,{photo:photoUrlCur||""});
-    results[key]=savedRec;
-    persist();
+        const rowNo=(data.row_numbers&&data.row_numbers[0]) ? Number(data.row_numbers[0].row||0) : 0;
 
-    const rowNo=(data.row_numbers&&data.row_numbers[0]) ? data.row_numbers[0].row : 0;
-    if(photoForQueue){
-      enqueuePhotoUpload(x,savedRec,Object.assign({},payload,{photo:photoForQueue}),rowNo);
+        if(item.photo){
+          const x=ASSETS.find(a=>keyOf(a)===item.id);
+          const rec=results[item.id]||{q:{},qty:0,note:"",qr:0,photo:"",at:new Date().toISOString(),by:counterName};
+          enqueuePhotoUpload(x||{a:item.asset,sub:item.sub},rec,
+            Object.assign({},item.payload,{photo:item.photo}),rowNo);
+          item.message="ผลนับเข้าศูนย์กลางแล้ว · รูปเข้าคิวอัปโหลด";
+        }else{
+          taskLogAdd("record",item.asset,"done","ผลนับบันทึกศูนย์กลางสำเร็จ");
+        }
+
+        syncQueue.shift();
+        persistTaskState();
+      }catch(e){
+        item.working=false;
+        item.error=true;
+        item.message="บันทึกไม่สำเร็จ · จะลองใหม่อัตโนมัติ";
+        persistTaskState();
+        taskLogAdd("record",item.asset,"error",item.message);
+        break;
+      }
     }
-
-    closeSheet(); render(); updateStats();
-    if(!document.getElementById("pageDash").classList.contains("hide")) renderDash();
-
-    setSync("on",photoForQueue?"บันทึกผลนับแล้ว · รูปกำลังอัปโหลดเบื้องหลัง":"บันทึกขึ้นศูนย์กลางแล้ว");
-    toast(photoForQueue?"✓ บันทึกผลนับแล้ว · รูปกำลังอัปโหลด":"✓ บันทึกผลนับแล้ว");
-  }catch(err){
-    setSync("err","บันทึกไม่สำเร็จ");
-    toast("บันทึกไม่สำเร็จ: "+(err.message||err));
-    if(btn){ btn.disabled=false; btn.textContent=oldTxt; }
+  }finally{
+    syncWorking=false;
+    renderTasks();
   }
 }
 
@@ -1806,7 +1966,7 @@ function saveSetup(){
   s.textContent="บันทึกแล้ว ✓ "+(webAppUrl?"พร้อมส่งเข้าศูนย์กลาง":"(ยังไม่ใส่ URL — เก็บในเครื่องอย่างเดียว)");
   updateResultInfo();
 }
-const APP_CODE_VERSION="14";   // เลขอ้างอิงเฉยๆ — ไม่ได้ใช้บล็อกการทำงานแล้ว
+const APP_CODE_VERSION="15";   // เลขอ้างอิงเฉยๆ — ไม่ได้ใช้บล็อกการทำงานแล้ว
 
 /* ความสามารถที่ระบบต้องมี (เช็กแทนการเทียบเลขเวอร์ชัน)
    ทำให้ Code.gs กับหน้าเว็บคนละเลขเวอร์ชันก็ใช้งานร่วมกันได้
@@ -1875,13 +2035,16 @@ function showPage(p){
   document.getElementById("pageCount").classList.toggle("hide",p!=="count");
   document.getElementById("pageDash").classList.toggle("hide",p!=="dash");
   document.getElementById("pageSummary").classList.toggle("hide",p!=="summary");
+  document.getElementById("pageTask").classList.toggle("hide",p!=="task");
   document.getElementById("pageSetup").classList.toggle("hide",p!=="setup");
   document.getElementById("navCount").classList.toggle("on",p==="count");
   document.getElementById("navDash").classList.toggle("on",p==="dash");
   document.getElementById("navSummary").classList.toggle("on",p==="summary");
+  document.getElementById("navTask").classList.toggle("on",p==="task");
   document.getElementById("navSetup").classList.toggle("on",p==="setup");
   if(p==="dash"){ renderDash(); }
   if(p==="summary"){ updateStats(); renderDivProgress(); }
+  if(p==="task"){ renderTasks(); }
   if(p==="setup"){ updateDataInfo(); updateResultInfo(); renderUsers(); loadUsers(false); }
   window.scrollTo(0,0);
 }
@@ -1915,7 +2078,7 @@ document.getElementById("photoInput").addEventListener("change",e=>{
 document.getElementById("shQR").addEventListener("change",e=>{
   document.getElementById("qrWrap").classList.toggle("on", e.target.checked);
 });
-window.addEventListener("online", ()=>{ setSync("","กลับมาออนไลน์ · กำลังซิงค์..."); refreshAll(false); });
+window.addEventListener("online", ()=>{ setSync("","กลับมาออนไลน์ · กำลังซิงค์..."); processSyncQueue(); processPhotoQueue(); refreshAll(false); });
 window.addEventListener("offline", ()=>{ setSync("off","ออฟไลน์ · เก็บในเครื่องไว้ก่อน"); });
 
 // ===== BOOT =====

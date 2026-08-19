@@ -265,6 +265,8 @@
   .adduser input{flex:1;padding:12px 14px;font-size:15px;border:1.5px solid var(--line);border-radius:11px}
   .adduser button{flex:0 0 auto;padding:12px 18px;border:none;border-radius:11px;
     background:var(--field);color:#fff;font-size:15px;font-weight:700;cursor:pointer}
+  .verwarn{background:var(--red-soft);border:1.5px solid #e0b4b4;border-radius:12px;
+    padding:12px 14px;margin:0 12px 10px;font-size:13px;color:var(--red);line-height:1.55;font-weight:600}
   .whopick{background:var(--amber-soft);border:1px solid #e6cf9a;border-radius:12px;
     padding:12px 14px;margin:0 12px 10px;font-size:14px;color:#7a5410;display:flex;
     align-items:center;gap:10px;justify-content:space-between}
@@ -355,6 +357,7 @@
 </header>
 
 <div id="pageCount">
+  <div class="verwarn hide" id="verWarn"></div>
   <div class="whopick hide" id="whoPick">
     <span>⚠️ ยังไม่ได้เลือกชื่อผู้ตรวจนับ</span>
     <button onclick="showPage('setup')">เลือกชื่อ</button>
@@ -650,7 +653,7 @@ function enterApp(){
   document.getElementById("app").classList.remove("hide");
   document.getElementById("inpUrl").value=webAppUrl;
   const av=document.getElementById("appVer"); if(av) av.textContent="v"+APP_CODE_VERSION;
-  renderUsers(); updateWhoUI(); loadUsers(false);
+  renderUsers(); updateWhoUI(); loadUsers(false); checkVersion();
   updateDataInfo();
   buildFilters(); refreshSecDropdown(); render(); updateStats(); updateQueueBadge();
   if(!webAppUrl){ setSync("off","ยังไม่ตั้งค่าศูนย์กลาง (แตะ ตั้งค่า)"); }
@@ -751,6 +754,25 @@ async function loadUsers(manual){
     say("err","เชื่อมต่อศูนย์กลางไม่ได้ — ตรวจ URL/สัญญาณเน็ต");
   }
 }
+let versionOK=null;   // null=ยังไม่ตรวจ, true=ตรง, false=ไม่ตรง
+async function checkVersion(){
+  const w=document.getElementById("verWarn");
+  if(!webAppUrl || !w) return;
+  try{
+    const res=await fetch(webAppUrl+(webAppUrl.includes("?")?"&":"?")+"t="+Date.now());
+    const data=await res.json();
+    const ver=String((data&&data.code_version)||"");
+    if(ver===APP_CODE_VERSION){ versionOK=true; w.classList.add("hide"); return; }
+    versionOK=false;
+    w.classList.remove("hide");
+    w.innerHTML="⛔ <b>หยุด! อย่าเพิ่งบันทึกผลนับ</b><br>"
+      +"เว็บนี้ต้องใช้กับ Code.gs <b>v"+APP_CODE_VERSION+"</b> "
+      +"แต่ศูนย์กลางที่เชื่อมอยู่เป็น <b>"+(ver? "v"+ver : "เวอร์ชันเก่า")+"</b><br>"
+      +"การบันทึกตอนนี้อาจทำให้ข้อมูลในชีตผิดพลาด — แจ้งผู้ดูแลให้อัปเดต Code.gs "
+      +"และตรวจว่าทุกคนใช้ URL เดียวกัน";
+  }catch(e){ /* เชื่อมต่อไม่ได้ ปล่อยให้ระบบเดิมแจ้งเอง */ }
+}
+
 function updateWhoUI(){
   const pill=document.getElementById("whoPill");
   if(pill) pill.textContent = counterName || "ยังไม่เลือกผู้ตรวจนับ";
@@ -1042,6 +1064,13 @@ function saveCount(){
   const rec={ q:q, qty:total, note:note, qr:qrFlag, photo:photoUrlCur,
               at:new Date().toISOString(), by:counterName };
   if(!webAppUrl){ toast("ยังไม่ได้ตั้งค่าศูนย์กลาง"); showPage('setup'); return; }
+  if(versionOK===false){
+    alert("⛔ บันทึกไม่ได้ — เวอร์ชันไม่ตรงกัน\n\n"
+      +"ศูนย์กลาง (Code.gs) เป็นคนละเวอร์ชันกับเว็บนี้\n"
+      +"ถ้าบันทึกต่ออาจทำให้ข้อมูลในชีตผิดพลาด\n\n"
+      +"แจ้งผู้ดูแลให้อัปเดต Code.gs และใช้ URL เดียวกันทุกเครื่อง");
+    return;
+  }
   saveToCloud(x, rec);
 }
 

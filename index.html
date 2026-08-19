@@ -297,6 +297,33 @@
   .choice .ci{font-size:30px;flex:0 0 auto}
   .choice .ct b{display:block;font-size:16px;font-weight:800;margin-bottom:3px}
   .choice .ct small{font-size:12px;color:var(--grey);line-height:1.5}
+  .steplabel{font-size:15px;font-weight:800;margin-bottom:12px;color:var(--ink)}
+  .namelist{display:flex;flex-direction:column;gap:9px;margin-bottom:12px}
+  .namebtn{display:flex;align-items:center;gap:12px;width:100%;text-align:left;
+    border:1.5px solid var(--line);border-radius:14px;padding:15px 18px;background:#fff;
+    cursor:pointer;transition:.15s;box-shadow:var(--shadow);font-size:16px;font-weight:700;color:var(--ink)}
+  .namebtn:hover{border-color:var(--field);background:var(--field-soft)}
+  .namebtn:active{transform:scale(.99)}
+  .namebtn .av{flex:0 0 auto;width:36px;height:36px;border-radius:99px;background:var(--field);
+    color:#fff;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:800}
+  .nameloading{font-size:14px;color:var(--grey);padding:16px 4px;text-align:center}
+  .namebtns{width:100%;max-width:400px;display:flex;flex-direction:column;gap:10px;margin-bottom:12px}
+  .namebtn{display:flex;align-items:center;gap:12px;width:100%;padding:16px 18px;
+    border:1.5px solid var(--line);border-radius:14px;background:#fff;cursor:pointer;
+    font-size:17px;font-weight:700;color:var(--ink);text-align:left;transition:.15s;box-shadow:var(--shadow)}
+  .namebtn:hover{border-color:var(--field);background:var(--field-soft)}
+  .namebtn:active{transform:scale(.99)}
+  .namebtn .av{flex:0 0 auto;width:38px;height:38px;border-radius:99px;background:var(--field);
+    color:#fff;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:800}
+  .wholist{width:100%;max-width:400px;display:flex;flex-direction:column;gap:10px}
+  .whobtn{display:flex;align-items:center;gap:13px;width:100%;text-align:left;
+    border:1.5px solid var(--line);border-radius:14px;padding:16px 18px;background:#fff;
+    cursor:pointer;transition:.15s;box-shadow:var(--shadow);font-family:inherit}
+  .whobtn:hover{border-color:var(--field);background:var(--field-soft)}
+  .whobtn:active{transform:scale(.99)}
+  .whobtn .av{flex:0 0 auto;width:40px;height:40px;border-radius:99px;background:var(--field);
+    color:#fff;display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:800}
+  .whobtn .nm{font-size:17px;font-weight:700;color:var(--ink)}
   .cloudinfo{max-width:400px;width:100%;font-size:13px;padding:11px 14px;border-radius:11px;
     background:#eef2f5;color:var(--blue);margin-top:4px;text-align:left}
   .cloudinfo.err{background:var(--red-soft);color:var(--red)}
@@ -311,27 +338,35 @@
 <div id="uploadScreen" class="upload-wrap">
   <div class="logo">📋</div>
   <h1>ตรวจนับสินทรัพย์ถาวร</h1>
-  <p>เชื่อมต่อศูนย์กลางเพื่อเริ่มตรวจนับ</p>
-  <div class="field-group" style="max-width:400px;width:100%;text-align:left">
-    <label>ที่อยู่ศูนย์กลาง (Web App URL)</label>
-    <div class="desc">วาง URL ที่ผู้ดูแลให้มา — ใส่ครั้งเดียว เครื่องนี้จะจำไว้</div>
-    <input id="startUrl" type="url" placeholder="https://script.google.com/macros/s/..../exec" autocomplete="off">
+  <p id="startSub">ระบบตรวจนับสินทรัพย์ถาวร</p>
+  <!-- ขั้นที่ 1: เลือกชื่อผู้ตรวจนับ -->
+  <div id="stepName" style="max-width:420px;width:100%">
+    <div class="steplabel">เลือกชื่อของคุณเพื่อเริ่มตรวจนับ</div>
+    <div id="nameList" class="namelist"></div>
+    <div id="nameStatus" class="cloudinfo hide"></div>
   </div>
-  <div class="choice" id="btnCloud" onclick="loadFromCloud()">
-    <div class="ci">☁️</div>
-    <div class="ct">
-      <b>โหลดรายการตรวจนับ</b>
-      <small>ดึงรายการสินทรัพย์จากศูนย์กลางมาเริ่มนับ</small>
+
+  <!-- ขั้นที่ 2 (สำรอง): กรอก URL เอง กรณีไม่ได้ฝังไว้ -->
+  <div id="stepUrl" class="hide" style="max-width:400px;width:100%">
+    <div class="field-group" style="text-align:left">
+      <label>ที่อยู่ศูนย์กลาง (Web App URL)</label>
+      <div class="desc">วาง URL ที่ผู้ดูแลให้มา — ใส่ครั้งเดียว เครื่องนี้จะจำไว้</div>
+      <input id="startUrl" type="url" placeholder="https://script.google.com/macros/s/..../exec" autocomplete="off">
+    </div>
+    <div class="choice" id="btnCloud" onclick="startWithUrl()">
+      <div class="ci">☁️</div>
+      <div class="ct"><b>เชื่อมต่อศูนย์กลาง</b><small>ดึงรายชื่อผู้ตรวจนับและรายการสินทรัพย์</small></div>
     </div>
   </div>
   <div id="cloudInfo" class="cloudinfo hide"></div>
   <div id="parseStatus" class="parsing hide"></div>
   <div class="upload-note">
-    โหลดครั้งเดียว · เปิดครั้งต่อไปไม่ต้องโหลดซ้ำ<br>
-    ผู้ดูแลอัปเดตรายการได้ที่ชีต “รายการตรวจนับ” ใน Google Sheet
+    เลือกชื่อครั้งเดียว เครื่องนี้จะจำไว้<br>
+    เปลี่ยนชื่อภายหลังได้ที่ ⚙︎ ตั้งค่า
   </div>
 </div>
 
+<!-- ===== เลือกชื่อผู้ตรวจนับ ===== -->
 <!-- ===== MAIN APP (hidden until data loaded) ===== -->
 <div id="app" class="hide">
 <header>
@@ -344,7 +379,7 @@
   <div class="sub">
     <span class="syncdot" id="syncDot"></span>
     <span id="syncText">พร้อมใช้งาน</span>
-    <span class="pill" id="whoPill">ยังไม่ระบุผู้นับ</span>
+    <span class="pill" id="whoPill" onclick="changeCounter()" style="cursor:pointer" title="แตะเพื่อเปลี่ยนผู้ตรวจนับ">ยังไม่ระบุผู้นับ</span>
   </div>
   <div class="scopebar" id="scopeBar">ทุกด้าน · ทุกแผนก</div>
   <div class="progressbar"><i id="hdrProg"></i></div>
@@ -440,6 +475,7 @@
     <label>ผู้ตรวจนับ (เลือกชื่อของคุณ)</label>
     <div class="desc">เลือกชื่อคุณจากรายการ — จะบันทึกลง Google Sheet ว่ารายการไหนใครนับ</div>
     <select id="selName"><option value="">— เลือกชื่อผู้ตรวจนับ —</option></select>
+    <button class="btn-ghost" style="margin-top:10px" onclick="changeName()">🔁 เปลี่ยนชื่อผู้ตรวจนับ</button>
   </div>
   <div class="field-group">
     <label>ที่อยู่ศูนย์กลาง (Web App URL)</label>
@@ -548,6 +584,14 @@
 <div class="toast" id="toast"></div>
 
 <script>
+/* ============================================================
+   ★★★ ตั้งค่าตรงนี้ที่เดียว ★★★
+   วาง URL ศูนย์กลาง (Web App URL) ที่ได้จาก Deploy Google Apps Script
+   ใส่แล้วทุกคนเปิดเว็บใช้ได้เลย ไม่ต้องตั้งค่าอะไร
+   ถ้าเว้นว่าง ("") ระบบจะให้ผู้ใช้กรอก URL เอง
+   ============================================================ */
+const BUILT_IN_URL = "https://script.google.com/macros/s/AKfycbxlN8woJvlwsxUCPigJ1GukYFc0G9XAb82S92V5N2WeAGA-MNUDOgeh1YWEdjjv4MYgyA/exec";
+
 const STATUSES = [
   {id:1, label:"สินทรัพย์ใช้งาน", cls:"s1"},
   {id:2, label:"สินทรัพย์เลิกใช้งาน", cls:"s2"},
@@ -582,7 +626,8 @@ const CUT_KEEP = "นับ";   // ค่าที่ถือว่า "ต้�
 let ASSETS = [];
 let results = {};
 let counterName = localStorage.getItem(K_NAME) || "";
-let webAppUrl   = localStorage.getItem(K_URL)  || "";
+let webAppUrl   = BUILT_IN_URL || localStorage.getItem(K_URL) || "";
+if(BUILT_IN_URL) localStorage.setItem(K_URL, BUILT_IN_URL);
 let deviceId    = localStorage.getItem(K_DEVICE) || "";
 if(!deviceId){ deviceId = "D"+Math.random().toString(36).slice(2,7); localStorage.setItem(K_DEVICE, deviceId); }
 try { results = JSON.parse(localStorage.getItem(K_RESULTS) || "{}"); } catch(e){}
@@ -614,6 +659,66 @@ function cleanStr(v){
 <script>
 let curFilter="all", curDiv="", curSec="", curSearch="", editingKey=null, editingStatus=null;
 
+/* ===== หน้าแรก: เลือกชื่อผู้ตรวจนับ ===== */
+async function startScreen(){
+  const box=document.getElementById("nameList");
+  const st=document.getElementById("nameStatus");
+  if(!webAppUrl){   // ไม่ได้ฝัง URL -> ให้กรอกเอง
+    document.getElementById("stepName").classList.add("hide");
+    document.getElementById("stepUrl").classList.remove("hide");
+    return;
+  }
+  box.innerHTML='<div class="nameloading">กำลังโหลดรายชื่อผู้ตรวจนับ...</div>';
+  try{
+    const res=await fetch(webAppUrl+(webAppUrl.includes("?")?"&":"?")+"action=users&t="+Date.now());
+    const data=await res.json();
+    if(!(data && Array.isArray(data.users))) throw new Error("no-users");
+    USERS=data.users;
+    localStorage.setItem("assetcount_2026_users", JSON.stringify(USERS));
+    if(!USERS.length){
+      box.innerHTML="";
+      st.classList.remove("hide"); st.classList.add("err");
+      st.innerHTML="ยังไม่มีรายชื่อผู้ตรวจนับในศูนย์กลาง<br>"
+        +"ให้ผู้ดูแลเพิ่มชื่อในชีต \"ผู้ตรวจนับ\" ของ Google Sheet ก่อน";
+      return;
+    }
+    box.innerHTML = USERS.map(u=>
+      '<button class="namebtn" onclick="pickName(\''+String(u).replace(/'/g,"\\'")+'\')">'
+      +'<span class="av">'+esc(String(u).trim().charAt(0).toUpperCase())+'</span>'
+      +'<span>'+esc(u)+'</span></button>').join("");
+  }catch(e){
+    box.innerHTML="";
+    st.classList.remove("hide"); st.classList.add("err");
+    st.innerHTML="เชื่อมต่อศูนย์กลางไม่ได้<br>ตรวจสัญญาณอินเทอร์เน็ต แล้วลองเปิดใหม่อีกครั้ง";
+  }
+}
+
+/* เลือกชื่อแล้วโหลดรายการต่อ */
+async function pickName(name){
+  counterName=String(name);
+  localStorage.setItem(K_NAME, counterName);
+  const box=document.getElementById("nameList");
+  box.innerHTML='<div class="nameloading">สวัสดี '+esc(counterName)+' · กำลังโหลดรายการตรวจนับ...</div>';
+  const saved=(()=>{ try{ return JSON.parse(localStorage.getItem(K_ASSETS)||"null"); }catch(e){ return null; } })();
+  if(saved && saved.length){
+    ASSETS=saved;
+    if(counterName) enterApp(); else showNameScreen();
+    return;
+  }
+  await loadFromCloud();
+}
+
+/* กรณีต้องกรอก URL เอง */
+async function startWithUrl(){
+  const inp=document.getElementById("startUrl");
+  const url=(inp && inp.value.trim())||"";
+  if(!url){ toast("กรุณาวาง URL ศูนย์กลางก่อน"); return; }
+  webAppUrl=url; localStorage.setItem(K_URL,url);
+  document.getElementById("stepUrl").classList.add("hide");
+  document.getElementById("stepName").classList.remove("hide");
+  startScreen();
+}
+
 /* ===== โหลดรายการจากศูนย์กลาง ===== */
 async function loadFromCloud(){
   const info=document.getElementById("cloudInfo");
@@ -641,12 +746,24 @@ async function loadFromCloud(){
         at:new Date().toISOString(), count:ASSETS.length, src:"cloud", ver:data.ver||""}));
     }catch(err){ info.classList.add("err"); info.textContent="บันทึกลงเครื่องไม่สำเร็จ: "+err; return; }
     info.textContent="สำเร็จ! ได้รายการ "+ASSETS.length.toLocaleString()+" รายการ";
-    setTimeout(()=>enterApp(), 400);
+    setTimeout(()=>{ counterName ? enterApp() : showNameScreen(); }, 400);
   }catch(err){
     info.classList.add("err");
     info.innerHTML="เชื่อมต่อไม่ได้ — ตรวจ URL และสัญญาณอินเทอร์เน็ต";
   }
 }
+
+/* แสดงหน้าเลือกชื่อผู้ตรวจนับ (ใช้ที่เดียวทั้งระบบ) */
+function showNameScreen(){
+  document.getElementById("app").classList.add("hide");
+  document.getElementById("uploadScreen").classList.remove("hide");
+  const sn=document.getElementById("stepName"); if(sn) sn.classList.remove("hide");
+  const su=document.getElementById("stepUrl"); if(su) su.classList.add("hide");
+  startScreen();
+  window.scrollTo(0,0);
+}
+/* แตะชื่อบนหัวจอ -> เปลี่ยนผู้ตรวจนับ */
+function changeCounter(){ showNameScreen(); }
 
 function enterApp(){
   document.getElementById("uploadScreen").classList.add("hide");
@@ -773,6 +890,10 @@ async function checkVersion(){
   }catch(e){ /* เชื่อมต่อไม่ได้ ปล่อยให้ระบบเดิมแจ้งเอง */ }
 }
 
+function changeName(){
+  counterName=""; localStorage.removeItem(K_NAME);
+  updateWhoUI(); showNameScreen();
+}
 function updateWhoUI(){
   const pill=document.getElementById("whoPill");
   if(pill) pill.textContent = counterName || "ยังไม่เลือกผู้ตรวจนับ";
@@ -1364,7 +1485,7 @@ function persist(){
 }
 function saveSetup(){
   counterName=document.getElementById("selName").value.trim();
-  webAppUrl=document.getElementById("inpUrl").value.trim();
+  webAppUrl=BUILT_IN_URL || document.getElementById("inpUrl").value.trim();
   localStorage.setItem(K_NAME, counterName); localStorage.setItem(K_URL, webAppUrl);
   updateWhoUI();
   if(webAppUrl) loadUsers(false);
@@ -1468,11 +1589,22 @@ window.addEventListener("offline", ()=>{ setSync("off","ออฟไลน์ ·
 
 // ===== BOOT =====
 (function boot(){
-  const su=document.getElementById("startUrl"); if(su && webAppUrl) su.value=webAppUrl;
+  // ถ้าฝัง URL ไว้แล้ว -> ซ่อนช่องกรอก URL ทั้งหมด
+  if(BUILT_IN_URL){
+    const iu=document.getElementById("inpUrl");
+    if(iu){ iu.value=BUILT_IN_URL; iu.readOnly=true; iu.style.background="#f0eee6"; iu.style.color="var(--grey)"; }
+    const ug=iu && iu.closest(".field-group");
+    if(ug){ const d=ug.querySelector(".desc");
+      if(d) d.textContent="ตั้งค่าไว้ในไฟล์แล้ว — ทุกเครื่องใช้ที่อยู่เดียวกัน (แก้ไขไม่ได้จากหน้านี้)"; }
+  } else {
+    const su=document.getElementById("startUrl"); if(su && webAppUrl) su.value=webAppUrl;
+  }
   let saved=null;
   try{ saved=JSON.parse(localStorage.getItem(K_ASSETS)||"null"); }catch(e){}
-  if(saved && saved.length){ ASSETS=saved; enterApp(); }
-  // ถ้ายังไม่มีข้อมูล -> อยู่หน้า upload
+  // ถ้าเคยเลือกชื่อไว้แล้ว และมีรายการอยู่ -> เข้าแอปเลย
+  if(counterName && saved && saved.length){ ASSETS=saved; enterApp(); return; }
+  // ยังไม่ได้เลือกชื่อ -> แสดงหน้าเลือกชื่อก่อนเสมอ
+  startScreen();
 })();
 </script>
 </body>

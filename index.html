@@ -105,6 +105,18 @@
   .prev-chip{font-size:11px;font-weight:700;background:#eef2f5;color:var(--blue);
     padding:2px 8px;border-radius:6px}
   .prev-chip.warn{background:var(--amber-soft);color:var(--amber)}
+  /* กล่องมูลค่า (ช่วยตัดสินใจตอนตรวจนับ) */
+  .finbox{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px}
+  .fincell{background:#f4f7f4;border:1px solid var(--line);border-radius:10px;padding:8px 10px;text-align:center}
+  .fincell .fl{font-size:10.5px;font-weight:700;color:var(--grey);letter-spacing:.2px;white-space:nowrap}
+  .fincell .fv{font-size:16px;font-weight:800;color:var(--ink);margin-top:2px}
+  .fincell.bv{background:#eaf4ee;border-color:#bfe0cc}
+  .fincell.bv .fl{color:var(--field-dark)}
+  .fincell.bv .fv{color:var(--field-dark)}
+  .fincell.bv.high{background:#fdeccf;border-color:#e6cf9a}
+  .fincell.bv.high .fl,.fincell.bv.high .fv{color:#9a6a12}
+  .fin-warn{grid-column:1/-1;font-size:12px;font-weight:700;color:#9a6a12;background:#fdeccf;
+    border:1px solid #e6cf9a;border-radius:8px;padding:6px 10px;text-align:center}
   .sheet-hint{font-size:13px;color:#4a554f;background:#fff;border:1px solid var(--line);
     border-radius:10px;padding:9px 12px;margin-bottom:12px}
   .sheet-hint b{color:var(--field-dark)}
@@ -241,6 +253,14 @@
   .dash-overall .obar > i{display:block; height:100%; background:#a8e6bd; border-radius:99px; transition:width .5s}
   .dash-overall .chips3{display:flex; gap:14px; margin-top:12px; font-size:12px}
   .dash-overall .chips3 b{display:block; font-size:17px; font-weight:800}
+  /* การ์ด KPI มูลค่าตามบัญชี (Book val.) */
+  .bvkpi{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px}
+  .bvk{background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.14);
+    border-radius:11px;padding:10px 12px}
+  .bvk span{display:block;font-size:11px;opacity:.9;line-height:1.3}
+  .bvk b{display:block;font-size:20px;font-weight:800;margin-top:3px;letter-spacing:.2px}
+  .bvk small{font-size:10px;opacity:.75;font-weight:600}
+  .bvk.warn{background:rgba(230,180,90,.26);border-color:rgba(230,180,90,.4)}
 
   /* แผงสถานะในแดชบอร์ด */
   .stgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-top:12px}
@@ -672,6 +692,7 @@
   <h3 id="shAsset"></h3>
   <div class="sdesc" id="shDesc"></div>
   <div class="sinfo" id="shInfo"></div>
+  <div id="shFin"></div>
   <div id="shPrev"></div>
   <div class="sheet-hint">กรอก<b>จำนวน</b>ในแต่ละสถานะ (รหัสเดียวมีหลายสถานะได้)</div>
   <div class="qtygrid" id="qtyGrid"></div>
@@ -737,7 +758,7 @@ const STATUSES = [
   {id:6, label:"สินทรัพย์สูญหาย", cls:"s6"},
 ];
 const ISSUE_STATUSES = [3,4,5,6];
-const K_ASSETS  = "assetcount_2026_assets_v3";
+const K_ASSETS  = "assetcount_2026_assets_v4";  // v4: เพิ่มฟิลด์ bv/av/ul (มูลค่า) — บังคับโหลดรายการใหม่จากศูนย์กลาง
 const K_META    = "assetcount_2026_meta_v3";
 const K_RESULTS = "assetcount_2026_results_v3";
 const K_QUEUE   = "assetcount_2026_queue_v3";
@@ -1020,7 +1041,9 @@ async function pickName(name){
       return;
     }
     ASSETS=rows.map(r=>({a:String(r.a),sub:String(r.sub||"0"),sn:r.sn||"",d:r.d||"",
-      div:r.div||"",sec:r.sec||"",cc:r.cc||"",q:Number(r.q)||0,ps:r.ps||"",pn:r.pn||""}));
+      div:r.div||"",sec:r.sec||"",cc:r.cc||"",q:Number(r.q)||0,
+      bv:Number(r.bv)||0,av:Number(r.av)||0,ul:r.ul||"",
+      ps:r.ps||"",pn:r.pn||""}));
     try{
       localStorage.setItem(K_ASSETS, JSON.stringify(ASSETS));
       localStorage.setItem(K_META, JSON.stringify({file:"(โหลดจากศูนย์กลาง)",
@@ -1211,7 +1234,9 @@ async function reloadAssets(){
     if(!rows.length){ s.className="status-line err";
       s.textContent='ยังไม่มีรายการในชีต "รายการตรวจนับ"'; return; }
     ASSETS=rows.map(r=>({a:String(r.a),sub:String(r.sub||"0"),sn:r.sn||"",d:r.d||"",
-      div:r.div||"",sec:r.sec||"",cc:r.cc||"",q:Number(r.q)||0,ps:r.ps||"",pn:r.pn||""}));
+      div:r.div||"",sec:r.sec||"",cc:r.cc||"",q:Number(r.q)||0,
+      bv:Number(r.bv)||0,av:Number(r.av)||0,ul:r.ul||"",
+      ps:r.ps||"",pn:r.pn||""}));
     localStorage.setItem(K_ASSETS, JSON.stringify(ASSETS));
     localStorage.setItem(K_META, JSON.stringify({file:"(โหลดจากศูนย์กลาง)",
       at:new Date().toISOString(), count:ASSETS.length, src:"cloud"}));
@@ -1292,6 +1317,27 @@ function render(){
 }
 function esc(s){ return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
 
+/* จัดรูปแบบตัวเลขเงิน (บาท) */
+function money(n){ n=Number(n)||0; return n.toLocaleString("th-TH",{maximumFractionDigits:0}); }
+
+/* กล่องมูลค่า + คำเตือนช่วยตัดสินใจ (BV ยังสูง = ควรพิจารณาก่อนตัดชำรุด) */
+function renderFinBox(x){
+  const el=document.getElementById("shFin"); if(!el) return;
+  const hasAny = (Number(x.av)||0)>0 || (Number(x.bv)||0)>0 || String(x.ul||"").trim()!=="";
+  if(!hasAny){ el.innerHTML=""; return; }
+  const bv=Number(x.bv)||0, av=Number(x.av)||0;
+  const bvHigh = bv>0;   // ยังมีมูลค่าตามบัญชี = ยังตัดค่าเสื่อมไม่ครบ
+  let h='<div class="finbox">'
+    +'<div class="fincell"><div class="fl">มูลค่าได้มา</div><div class="fv">'+money(av)+'</div></div>'
+    +'<div class="fincell bv'+(bvHigh?" high":"")+'"><div class="fl">มูลค่าตามบัญชี</div><div class="fv">'+money(bv)+'</div></div>'
+    +'<div class="fincell"><div class="fl">อายุการใช้งาน</div><div class="fv">'+(String(x.ul||"").trim()||"—")+'</div></div>';
+  if(bvHigh){
+    h+='<div class="fin-warn">⚠ มูลค่าตามบัญชียังเหลือ '+money(bv)+' — พิจารณาก่อนเลือก “รอตัดชำรุด/สูญหาย”</div>';
+  }
+  h+='</div>';
+  el.innerHTML=h;
+}
+
 function openSheet(k){
   const x=ASSETS.find(a=>keyOf(a)===k); if(!x) return;
   editingKey=k; const r=results[k]; editingStatus=r?r.status:null;
@@ -1305,6 +1351,8 @@ function openSheet(k){
   if(r && r.by) info+='<span class="tag" style="background:#eef2f5;color:var(--blue)">นับโดย '+esc(r.by)
     +(r.at?' · '+new Date(r.at).toLocaleString("th-TH",{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"}):'')+'</span>';
   document.getElementById("shInfo").innerHTML=info;
+  // กล่องมูลค่า: มูลค่าได้มา / มูลค่าตามบัญชี / อายุการใช้งาน — ช่วยตัดสินใจก่อนเลือกสถานะ
+  renderFinBox(x);
   // สร้างแถวกรอกจำนวนแยกตามสถานะ
   const grid=document.getElementById("qtyGrid"); grid.innerHTML="";
   const cur = r ? (r.q||{}) : {};
@@ -1689,11 +1737,13 @@ function statsFor(list){
   let t=list.length, c=0, iss=0, lost=0, qtyDiff=0;
   const q={1:0,2:0,3:0,4:0,5:0,6:0};   // จำนวน "ชิ้น" แยกตามสถานะ
   let over=0, under=0, sapQty=0, cntQty=0;
+  let bvSum=0, bvIssue=0;   // มูลค่าตามบัญชี: รวมทั้งหมด / เฉพาะรายการที่มีประเด็น
   for(const x of list){
     sapQty += Number(x.q)||0;
+    const bv=Number(x.bv)||0; bvSum += bv;
     const r=results[keyOf(x)];
     if(r){ c++;
-      if(hasIssue(r)) iss++;
+      if(hasIssue(r)){ iss++; bvIssue += bv; }
       if(hasLost(r)) lost++;
       const rq=r.q||{};
       for(let i=1;i<=6;i++) q[i] += Number(rq[i]||0);
@@ -1704,7 +1754,18 @@ function statsFor(list){
   }
   return {t:t, c:c, remain:t-c, iss:iss, lost:lost, diff:qtyDiff,
           q:q, over:over, under:under, sapQty:sapQty, cntQty:cntQty,
+          bvSum:bvSum, bvIssue:bvIssue,
           pct: t? Math.round(c/t*100):0};
+}
+
+/* การ์ด KPI มูลค่าตามบัญชี (Book val.) — รวมทั้งขอบเขต + เฉพาะรายการมีประเด็น */
+function bvKpi(st){
+  return '<div class="bvkpi">'
+    +'<div class="bvk"><span>มูลค่าตามบัญชีรวม · Book val.</span><b>'+money(st.bvSum)+'</b>'
+      +'<small>บาท · '+st.t.toLocaleString()+' รายการ</small></div>'
+    +'<div class="bvk'+(st.bvIssue>0?" warn":"")+'"><span>Book val. รายการที่มีประเด็น</span><b>'+money(st.bvIssue)+'</b>'
+      +'<small>บาท · '+st.iss.toLocaleString()+' รายการ</small></div>'
+    +'</div>';
 }
 
 /* แผงแสดงจำนวนแยกตามสถานะ (ใช้ทั้งภาพรวมและรายด้าน) */
@@ -1755,6 +1816,7 @@ function renderDash(){
       +'<div><b>'+all.lost.toLocaleString()+'</b>สูญหาย</div>'
       +'<div><b>'+all.diff.toLocaleString()+'</b>จำนวนไม่ตรง</div>'
     +'</div>'
+    + bvKpi(all)
     + statusPanel(all);
 
   // การ์ดรายด้าน
@@ -1793,6 +1855,7 @@ function renderDashSections(){
       +'<div><b>'+s.iss.toLocaleString()+'</b>มีประเด็น</div>'
       +'<div><b>'+s.lost.toLocaleString()+'</b>สูญหาย</div>'
     +'</div>'
+    + bvKpi(s)
     + statusPanel(s);
 
   // รวมรายแผนก
@@ -2030,12 +2093,14 @@ async function testConnection(){
 function exportCSV(){
   const rows=[["No.","Asset","Serial number","Description","ด้าน","แผนก","Cost Center",
     "สถานะผลตรวจนับปีก่อน","หมายเหตุการตรวจนับปีก่อน","จำนวน SAP",
+    "มูลค่าได้มา (Acquis.val.)","มูลค่าตามบัญชี (Book val.)","อายุการใช้งาน (Useful Life)",
     "ใช้งาน","เลิกใช้งาน","โอนย้าย","รอตัดชำรุด","ติดประเด็นรอตรวจสอบ","สูญหาย",
     "จำนวนตรวจนับ","ผลต่าง","หมายเหตุการตรวจนับ","ต้องปริ้น QR ติดเพิ่ม","ลิงก์รูปภาพ","ผู้นับ","เวลาที่นับ"]];
   let i=0;
   for(const x of ASSETS){ const r=results[keyOf(x)]; if(!r) continue; i++;
     const q=r.q||{}; const v=(r.qty||0)-(x.q||0);
     rows.push([i,x.a,x.sn,x.d,x.div,x.sec,x.cc,(x.ps||""),(x.pn||""),x.q,
+      (x.av||0),(x.bv||0),(x.ul||""),
       q[1]||"",q[2]||"",q[3]||"",q[4]||"",q[5]||"",q[6]||"",
       r.qty||0,v,(r.note||"").replace(/\n/g," "),(r.qr?"ต้องติด":""),(r.photo||""),(r.by||counterName),new Date(r.at).toLocaleString("th-TH")]); }
   if(i===0){ toast("ยังไม่มีรายการที่นับ"); return; }

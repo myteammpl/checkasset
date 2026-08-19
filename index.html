@@ -220,6 +220,27 @@
   .dash-overall .chips3{display:flex; gap:14px; margin-top:12px; font-size:12px}
   .dash-overall .chips3 b{display:block; font-size:17px; font-weight:800}
 
+  /* แผงสถานะในแดชบอร์ด */
+  .stgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-top:12px}
+  .stcell{background:rgba(255,255,255,.14);border-radius:9px;padding:7px 8px;text-align:center;
+    border:1px solid rgba(255,255,255,.10)}
+  .stcell.on{background:rgba(255,255,255,.26);border-color:rgba(255,255,255,.28)}
+  .stcell b{display:block;font-size:17px;font-weight:800;line-height:1.15}
+  .stcell span{font-size:10.5px;opacity:.9;line-height:1.25;display:block}
+  .stdiff{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:10px;font-size:12px;opacity:.95}
+  .stdiff b{font-weight:800}
+  .stdiff .dv{padding:2px 9px;border-radius:99px;background:rgba(255,255,255,.16);font-weight:700}
+  .stdiff .dv.over{background:#f2d9a6;color:#6b4a08}
+  .stdiff .dv.under{background:#f2b8b8;color:#7a2020}
+  /* ป้ายสถานะเล็กบนการ์ด */
+  .mini-badge.s1{background:var(--field-soft);color:var(--field-dark)}
+  .mini-badge.s2{background:#ececec;color:#555}
+  .mini-badge.s3{background:#e6eff5;color:var(--blue)}
+  .mini-badge.s4{background:var(--amber-soft);color:var(--amber)}
+  .mini-badge.s5{background:#fbf7dc;color:#8a7300}
+  .mini-badge.s6{background:var(--red-soft);color:var(--red)}
+  .mini-badge.over{background:#fbf0dc;color:#8a5a00}
+  .mini-badge.under{background:#f7e4e2;color:var(--red)}
   .divcard{background:#fff; border:1px solid var(--line); border-radius:14px; padding:14px 16px; margin-bottom:10px;
     box-shadow:var(--shadow); cursor:pointer; transition:.15s; position:relative}
   .divcard:active{transform:scale(.99)}
@@ -858,6 +879,51 @@ async function startScreen(isRetry=false){
   }
 }
 
+/* เลือกชื่อผู้ตรวจนับ -> จำชื่อ แล้วโหลดรายการเข้าแอป */
+async function pickName(name){
+  counterName=String(name||"").trim();
+  if(!counterName) return;
+  localStorage.setItem(K_NAME, counterName);
+  updateWhoUI();
+
+  // มีรายการเก็บไว้แล้ว -> เข้าแอปเลย
+  let saved=null;
+  try{ saved=JSON.parse(localStorage.getItem(K_ASSETS)||"null"); }catch(e){}
+  if(saved && saved.length){ ASSETS=saved; enterApp(); return; }
+
+  // ยังไม่มีรายการ -> ดึงจากชีต "รายการตรวจนับ"
+  showBootLoading("กำลังเตรียมข้อมูล",
+    'กำลังโหลดรายการตรวจนับ<span class="boot-dots"></span>',
+    "ครั้งแรกอาจใช้เวลาสักครู่");
+  const st=document.getElementById("nameStatus");
+  try{
+    const res=await fetch(webAppUrl+(webAppUrl.includes("?")?"&":"?")+"action=assets&t="+Date.now(),
+                          {cache:"no-store"});
+    const data=await res.json();
+    if(!(data&&data.ok)) throw new Error("รูปแบบข้อมูลผิด");
+    const rows=data.rows||[];
+    if(!rows.length){
+      hideBootLoading();
+      if(st){ st.classList.remove("hide"); st.classList.add("err");
+        st.innerHTML='ยังไม่มีรายการในชีต "รายการตรวจนับ"<br>ให้ผู้ดูแลวางข้อมูลในชีตก่อน'; }
+      return;
+    }
+    ASSETS=rows.map(r=>({a:String(r.a),sub:String(r.sub||"0"),sn:r.sn||"",d:r.d||"",
+      div:r.div||"",sec:r.sec||"",cc:r.cc||"",q:Number(r.q)||0,ps:r.ps||"",pn:r.pn||""}));
+    try{
+      localStorage.setItem(K_ASSETS, JSON.stringify(ASSETS));
+      localStorage.setItem(K_META, JSON.stringify({file:"(โหลดจากศูนย์กลาง)",
+        at:new Date().toISOString(), count:ASSETS.length, src:"cloud"}));
+    }catch(e){}
+    buildFilters(); refreshSecDropdown();
+    enterApp();
+  }catch(err){
+    hideBootLoading();
+    if(st){ st.classList.remove("hide"); st.classList.add("err");
+      st.innerHTML="โหลดรายการไม่สำเร็จ — ตรวจสัญญาณอินเทอร์เน็ต แล้วลองใหม่"; }
+  }
+}
+
 /* แสดงหน้าเลือกชื่อผู้ตรวจนับ (ใช้ที่เดียวทั้งระบบ) */
 function showNameScreen(){
   document.getElementById("app").classList.add("hide");
@@ -985,14 +1051,15 @@ async function checkVersion(){
     const res=await fetch(webAppUrl+(webAppUrl.includes("?")?"&":"?")+"t="+Date.now());
     const data=await res.json();
     const ver=String((data&&data.code_version)||"");
-    if(ver===APP_CODE_VERSION){ versionOK=true; w.classList.add("hide"); return; }
+    const miss=missingFeatures(data);
+    if(miss.length===0){ versionOK=true; w.classList.add("hide"); return; }
     versionOK=false;
     w.classList.remove("hide");
     w.innerHTML="⛔ <b>หยุด! อย่าเพิ่งบันทึกผลนับ</b><br>"
-      +"เว็บนี้ต้องใช้กับ Code.gs <b>v"+APP_CODE_VERSION+"</b> "
-      +"แต่ศูนย์กลางที่เชื่อมอยู่เป็น <b>"+(ver? "v"+ver : "เวอร์ชันเก่า")+"</b><br>"
-      +"การบันทึกตอนนี้อาจทำให้ข้อมูลในชีตผิดพลาด — แจ้งผู้ดูแลให้อัปเดต Code.gs "
-      +"และตรวจว่าทุกคนใช้ URL เดียวกัน";
+      +"ศูนย์กลางที่เชื่อมอยู่ยังไม่รองรับ: <b>"+miss.join(", ")+"</b>"
+      +(ver? " (Code.gs v"+ver+")" : "")+"<br>"
+      +"แจ้งผู้ดูแลให้วาง Code.gs ตัวใหม่ แล้ว Deploy → Manage deployments "
+      +"→ ✏️ → Version: New version → Deploy";
   }catch(e){ /* เชื่อมต่อไม่ได้ ปล่อยให้ระบบเดิมแจ้งเอง */ }
 }
 
@@ -1172,11 +1239,12 @@ const PHOTO_QUALITY = 0.52;   // คุณภาพ JPEG
 let photoData = null;        // dataURL รูปใหม่ที่จะส่ง (null = ไม่เปลี่ยน)
 let photoUrlCur = "";        // ลิงก์รูปเดิมที่มีอยู่แล้ว
 
-// ===== Background Photo Upload Queue (v13) =====
-const K_PHOTO_QUEUE = "assetcount_2026_photo_queue_v13";
+// ===== Background Photo Upload Queue (v14) =====
+const K_PHOTO_QUEUE = "assetcount_2026_photo_queue_v14";
 let photoQueue = [];
 let photoUploading = false;
 (function(){ try{ photoQueue=JSON.parse(localStorage.getItem(K_PHOTO_QUEUE)||"[]"); }catch(e){ photoQueue=[]; } })();
+
 function persistPhotoQueue(){
   try{ localStorage.setItem(K_PHOTO_QUEUE, JSON.stringify(photoQueue)); }catch(e){}
   updatePhotoQueueBadge();
@@ -1191,25 +1259,41 @@ function updatePhotoQueueBadge(){
   if(photoQueue.length){ el.style.display=""; el.textContent="📷 กำลังอัปโหลดรูป "+photoQueue.length+" รายการ"; }
   else el.style.display="none";
 }
-function enqueuePhotoUpload(x, rec, payload){
+function enqueuePhotoUpload(x, rec, payload, row){
   if(!payload.photo) return;
-  photoQueue.push({id:keyOf(x), rec:rec, payload:payload, createdAt:Date.now()});
+  const item={id:keyOf(x), asset:String(x.a), sub:String(x.sub||"0"), row:Number(row||0),
+              rec:rec, payload:payload, createdAt:Date.now()};
+  // ถ้ามีคิวของรายการเดียวกันอยู่ ให้ใช้รูป/ข้อมูลล่าสุดแทน ไม่ส่งซ้ำ
+  const idx=photoQueue.findIndex(q=>q.id===item.id);
+  if(idx>=0) photoQueue[idx]=item; else photoQueue.push(item);
   persistPhotoQueue(); processPhotoQueue();
 }
 async function processPhotoQueue(){
   if(photoUploading || !photoQueue.length || !webAppUrl || !navigator.onLine) return;
-  photoUploading=true;
+  photoUploading=true; updatePhotoQueueBadge();
   while(photoQueue.length && navigator.onLine){
     const item=photoQueue[0];
     try{
-      const res=await fetch(webAppUrl,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify({rows:[item.payload]})});
+      const res=await fetch(webAppUrl,{
+        method:"POST",
+        headers:{"Content-Type":"text/plain;charset=utf-8"},
+        body:JSON.stringify({
+          action:"photo_upload",
+          asset:item.asset, sub:item.sub, row:item.row,
+          photo:item.payload.photo
+        })
+      });
       const data=await res.json();
-      if(!(data&&data.ok)) throw new Error((data&&data.error)||"อัปโหลดไม่สำเร็จ");
+      if(!(data&&data.ok)) throw new Error((data&&data.error)||"อัปโหลดรูปไม่สำเร็จ");
       if(data.photo_url && results[item.id]){
-        results[item.id].photo=data.photo_url; persist();
+        results[item.id].photo=data.photo_url;
+        persist();
       }
       photoQueue.shift(); persistPhotoQueue();
-    }catch(e){ break; }
+    }catch(e){
+      // เก็บคิวไว้ ไม่ทำให้ผลตรวจนับหาย
+      break;
+    }
   }
   photoUploading=false; updatePhotoQueueBadge();
 }
@@ -1220,9 +1304,13 @@ function driveId(url){
   const m=String(url||"").match(/\/d\/([a-zA-Z0-9_-]{10,})/) || String(url||"").match(/[?&]id=([a-zA-Z0-9_-]{10,})/);
   return m?m[1]:"";
 }
+function driveView(url){
+  const id=driveId(url);
+  return id ? ("https://drive.google.com/file/d/"+id+"/view") : url;
+}
 function driveThumb(url){
   const id=driveId(url);
-  return id ? ("https://drive.google.com/thumbnail?id="+id+"&sz=w1000") : "";
+  return id ? ("https://drive.google.com/thumbnail?id="+id+"&sz=w1200") : "";
 }
 function driveDownload(url){
   const id=driveId(url);
@@ -1245,14 +1333,14 @@ function setPhotoUI(){
     prev.classList.remove("hide"); body.classList.remove("hide");
     img.style.display="";
     const t=driveThumb(photoUrlCur);
-    hint.textContent="กำลังโหลดรูป..."; hint.classList.add("on");
+    hint.textContent="กำลังโหลดรูปจากศูนย์กลาง..."; hint.classList.add("on");
     img.onload=()=>{ document.getElementById("pHint").textContent="มีรูปแล้ว"; };
     img.onerror=()=>{
       img.style.display="none";
       document.getElementById("pHint").textContent="มีรูป (กดเปิดดู)";
     };
     img.src = t || photoUrlCur;
-    open.href=photoUrlCur; open.classList.remove("hide");
+    open.href=driveView(photoUrlCur); open.classList.remove("hide");
     const dl=document.getElementById("pDown");
     if(dl){ dl.href=driveDownload(photoUrlCur); dl.classList.remove("hide"); }
   } else {
@@ -1352,9 +1440,10 @@ async function saveToCloud(x, rec){
   const oldTxt=btn?btn.textContent:"บันทึกผลนับ";
   if(btn){ btn.disabled=true; btn.textContent="กำลังบันทึกผลนับ..."; }
 
+  // สำคัญ: รอบแรกส่งเฉพาะข้อมูลผลนับ ไม่ส่งรูป
   const payload=buildPayload(x, rec);
   const photoForQueue=payload.photo||"";
-  payload.photo=""; // บันทึกข้อมูลก่อน ไม่รอรูป
+  payload.photo="";
 
   try{
     const res=await fetch(webAppUrl,{
@@ -1363,13 +1452,15 @@ async function saveToCloud(x, rec){
       body:JSON.stringify({rows:[payload]})
     });
     const data=await res.json();
-    if(!(data&&data.ok)) throw new Error((data&&data.error)||"ไม่สำเร็จ");
+    if(!(data&&data.ok)) throw new Error((data&&data.error)||"บันทึกไม่สำเร็จ");
 
     const savedRec=Object.assign({},rec,{photo:photoUrlCur||""});
-    results[key]=savedRec; persist();
+    results[key]=savedRec;
+    persist();
 
+    const rowNo=(data.row_numbers&&data.row_numbers[0]) ? data.row_numbers[0].row : 0;
     if(photoForQueue){
-      enqueuePhotoUpload(x,savedRec,Object.assign({},payload,{photo:photoForQueue}));
+      enqueuePhotoUpload(x,savedRec,Object.assign({},payload,{photo:photoForQueue}),rowNo);
     }
 
     closeSheet(); render(); updateStats();
@@ -1382,6 +1473,20 @@ async function saveToCloud(x, rec){
     toast("บันทึกไม่สำเร็จ: "+(err.message||err));
     if(btn){ btn.disabled=false; btn.textContent=oldTxt; }
   }
+}
+
+function buildPayload(x, rec){
+  const q=rec.q||{};
+  return {
+    asset:x.a, sub:x.sub||"0", sn:x.sn||"", desc:x.d||"", div:x.div||"", sec:x.sec||"",
+    cc:x.cc||"", qsap:x.q,
+    q1:q[1]||0, q2:q[2]||0, q3:q[3]||0, q4:q[4]||0, q5:q[5]||0, q6:q[6]||0,
+    qty:rec.qty||0, note:rec.note||"", qr:(rec.qr?1:0),
+    photo:(photoData||""),
+    photo_clear:(!photoData && !photoUrlCur)?1:0,
+    at:rec.at||new Date().toISOString(), by:rec.by||counterName||"",
+    device:navigator.userAgent||""
+  };
 }
 
 /* สรุปสถานะของรายการ (ใช้แสดงป้าย) */
@@ -1406,15 +1511,53 @@ let dashDiv=null;   // ด้านที่เลือกอยู่ (null = 
 
 function statsFor(list){
   let t=list.length, c=0, iss=0, lost=0, qtyDiff=0;
+  const q={1:0,2:0,3:0,4:0,5:0,6:0};   // จำนวน "ชิ้น" แยกตามสถานะ
+  let over=0, under=0, sapQty=0, cntQty=0;
   for(const x of list){
+    sapQty += Number(x.q)||0;
     const r=results[keyOf(x)];
     if(r){ c++;
       if(hasIssue(r)) iss++;
       if(hasLost(r)) lost++;
-      if(typeof r.qty==="number" && (r.qty-(x.q||0))!==0) qtyDiff++;
+      const rq=r.q||{};
+      for(let i=1;i<=6;i++) q[i] += Number(rq[i]||0);
+      cntQty += Number(r.qty)||0;
+      const d=(Number(r.qty)||0)-(Number(x.q)||0);
+      if(d!==0){ qtyDiff++; if(d>0) over+=d; else under+=(-d); }
     }
   }
-  return {t:t, c:c, remain:t-c, iss:iss, lost:lost, diff:qtyDiff, pct: t? Math.round(c/t*100):0};
+  return {t:t, c:c, remain:t-c, iss:iss, lost:lost, diff:qtyDiff,
+          q:q, over:over, under:under, sapQty:sapQty, cntQty:cntQty,
+          pct: t? Math.round(c/t*100):0};
+}
+
+/* แผงแสดงจำนวนแยกตามสถานะ (ใช้ทั้งภาพรวมและรายด้าน) */
+function statusPanel(st){
+  const items=STATUSES.map(s=>({label:s.label, n:st.q[s.id]||0, cls:s.cls}));
+  let h='<div class="stgrid">';
+  items.forEach(it=>{
+    h+='<div class="stcell'+(it.n? " on":"")+'">'
+      +'<b>'+it.n.toLocaleString()+'</b><span>'+esc(it.label.replace("สินทรัพย์",""))+'</span></div>';
+  });
+  h+='</div>';
+  h+='<div class="stdiff">'
+    +'<span>นับได้ <b>'+st.cntQty.toLocaleString()+'</b> / SAP <b>'+st.sapQty.toLocaleString()+'</b></span>'
+    +'<span class="dv'+(st.over? " over":"")+'">เกิน +'+st.over.toLocaleString()+'</span>'
+    +'<span class="dv'+(st.under? " under":"")+'">ขาด -'+st.under.toLocaleString()+'</span>'
+    +'</div>';
+  return h;
+}
+
+/* แถบเล็กแสดงสถานะบนการ์ดแผนก (เฉพาะที่มีจำนวน) */
+function statusMini(st){
+  let h="";
+  STATUSES.forEach(s=>{
+    const n=st.q[s.id]||0;
+    if(n>0) h+='<span class="mini-badge s'+s.id+'">'+esc(s.label.replace("สินทรัพย์",""))+' '+n+'</span>';
+  });
+  if(st.over)  h+='<span class="mini-badge over">เกิน +'+st.over+'</span>';
+  if(st.under) h+='<span class="mini-badge under">ขาด -'+st.under+'</span>';
+  return h;
 }
 function barClass(pct){ return pct>=100?"hi":(pct<50?"low":""); }
 
@@ -1435,7 +1578,8 @@ function renderDash(){
       +'<div><b>'+all.iss.toLocaleString()+'</b>มีประเด็น</div>'
       +'<div><b>'+all.lost.toLocaleString()+'</b>สูญหาย</div>'
       +'<div><b>'+all.diff.toLocaleString()+'</b>จำนวนไม่ตรง</div>'
-    +'</div>';
+    +'</div>'
+    + statusPanel(all);
 
   // การ์ดรายด้าน
   const map={};
@@ -1444,9 +1588,7 @@ function renderDash(){
   Object.keys(map).sort((a,b)=>map[b].length-map[a].length).forEach(d=>{
     const s=statsFor(map[d]);
     const nSec=new Set(map[d].map(x=>x.sec||"(ไม่ระบุแผนก)")).size;
-    let badges='<span class="mini-badge done">'+nSec+' แผนก</span>';
-    if(s.iss)  badges+='<span class="mini-badge iss">ประเด็น '+s.iss+'</span>';
-    if(s.lost) badges+='<span class="mini-badge lost">สูญหาย '+s.lost+'</span>';
+    let badges='<span class="mini-badge done">'+nSec+' แผนก</span>' + statusMini(s);
     box.innerHTML+='<div class="divcard" onclick="dashOpen(\''+d.replace(/'/g,"\\'")+'\')">'
       +'<div class="arrow">›</div>'
       +'<div class="dtop"><div class="dname">'+esc(d)+'</div><div class="dpct">'+s.pct+'%</div></div>'
@@ -1474,7 +1616,8 @@ function renderDashSections(){
       +'<div><b>'+s.remain.toLocaleString()+'</b>คงเหลือ</div>'
       +'<div><b>'+s.iss.toLocaleString()+'</b>มีประเด็น</div>'
       +'<div><b>'+s.lost.toLocaleString()+'</b>สูญหาย</div>'
-    +'</div>';
+    +'</div>'
+    + statusPanel(s);
 
   // รวมรายแผนก
   const map={};
@@ -1491,9 +1634,7 @@ function renderDashSections(){
   arr.forEach(o=>{
     const st=o.st;
     const col = st.pct>=100? "#4a9d6e" : st.pct<50? "var(--amber)" : "var(--field)";
-    let flags="";
-    if(st.iss)  flags+='<span class="mini-badge iss">ประเด็น '+st.iss+'</span>';
-    if(st.lost) flags+='<span class="mini-badge lost">หาย '+st.lost+'</span>';
+    let flags=statusMini(st);
     if(!flags && st.pct>=100) flags='<span class="mini-badge done">ครบแล้ว</span>';
     html+='<div class="seccard" onclick="gotoSection(\''+o.name.replace(/'/g,"\\'")+'\')">'
       +'<div class="sname">'+esc(o.name)+'</div>'
@@ -1665,7 +1806,18 @@ function saveSetup(){
   s.textContent="บันทึกแล้ว ✓ "+(webAppUrl?"พร้อมส่งเข้าศูนย์กลาง":"(ยังไม่ใส่ URL — เก็บในเครื่องอย่างเดียว)");
   updateResultInfo();
 }
-const APP_CODE_VERSION="13";   // ต้องตรงกับ CODE_VERSION ใน Code.gs
+const APP_CODE_VERSION="14";   // เลขอ้างอิงเฉยๆ — ไม่ได้ใช้บล็อกการทำงานแล้ว
+
+/* ความสามารถที่ระบบต้องมี (เช็กแทนการเทียบเลขเวอร์ชัน)
+   ทำให้ Code.gs กับหน้าเว็บคนละเลขเวอร์ชันก็ใช้งานร่วมกันได้
+   ตราบใดที่ความสามารถครบ */
+const NEED_FEATURES = ["assets","users","pull"];
+const FEATURE_LABEL = { assets:"ดึงรายการตรวจนับ", users:"รายชื่อผู้ตรวจนับ", pull:"ดึงผลตรวจนับ" };
+function missingFeatures(data){
+  const f = (data && Array.isArray(data.features)) ? data.features : null;
+  if(!f) return NEED_FEATURES.map(k=>FEATURE_LABEL[k]||k);   // ไม่บอก features = เก่ามาก
+  return NEED_FEATURES.filter(k=>f.indexOf(k)<0).map(k=>FEATURE_LABEL[k]||k);
+}
 
 async function testConnection(){
   const url=document.getElementById("inpUrl").value.trim();
@@ -1678,10 +1830,11 @@ async function testConnection(){
     const data=await res.json();
     if(!(data&&data.ok)) throw new Error();
     const ver=String(data.code_version||"");
-    if(ver!==APP_CODE_VERSION){
+    const miss=missingFeatures(data);
+    if(miss.length){
       s.className="status-line err";
-      s.textContent="⚠️ Code.gs ในศูนย์กลางเป็นเวอร์ชันเก่า"
-        +"\nศูนย์กลาง: "+(ver||"เก่ามาก (ไม่มีเลขเวอร์ชัน)")+"  ·  แอปต้องการ: "+APP_CODE_VERSION
+      s.textContent="⚠️ ศูนย์กลางยังไม่รองรับ: "+miss.join(", ")
+        +(ver? "  (Code.gs v"+ver+")" : "  (ไม่มีเลขเวอร์ชัน = เก่ามาก)")
         +"\n\nวิธีแก้: วาง Code.gs ตัวใหม่ → บันทึก → Deploy → Manage deployments"
         +"\n→ กดดินสอ ✏️ → Version: New version → Deploy";
       return;

@@ -726,7 +726,7 @@
    ใส่แล้วทุกคนเปิดเว็บใช้ได้เลย ไม่ต้องตั้งค่าอะไร
    ถ้าเว้นว่าง ("") ระบบจะให้ผู้ใช้กรอก URL เอง
    ============================================================ */
-const BUILT_IN_URL = "https://script.google.com/macros/s/AKfycbxPZ0MnVOrQg1jreR8lMZuXZXQroXd79tWPXGmVSfRRqqsHMsrfdr66iXF9JNRdbE6QXA/exec";
+const BUILT_IN_URL = "https://script.google.com/macros/s/AKfycbwd5FFmeY49sqZBspRnK5B2_CCiRkmPz2KrhmCrER3auTsM3vGTzaiq-iwlpSTPdZO-bA/exec";
 
 const STATUSES = [
   {id:1, label:"สินทรัพย์ใช้งาน", cls:"s1"},
@@ -1406,7 +1406,7 @@ async function processPhotoQueue(){
       // ต้องยืนยันว่า server ประมวลผล action=photo_upload จริง
       // และมี URL รูปที่ถูกเขียนลง Sheet แล้ว
       if(data.action!=="photo_upload"){
-        throw new Error("ศูนย์กลางตอบกลับผิดโหมด: "+String(data.message||"ยังไม่ได้อัปโหลดรูป"));
+        throw new Error("ศูนย์กลาง (Code.gs) ยังไม่รองรับการอัปโหลดรูป — โค้ดเก่ายังไม่ถูก Deploy ใหม่ · แก้: Apps Script → Deploy → Manage deployments → ✏️ → New version");
       }
       if(!data.photo_url){
         throw new Error("อัปโหลดไฟล์แล้วแต่ไม่พบลิงก์รูปจากศูนย์กลาง");
@@ -1987,8 +1987,8 @@ const APP_CODE_VERSION="16";   // เลขอ้างอิงเฉยๆ —
 /* ความสามารถที่ระบบต้องมี (เช็กแทนการเทียบเลขเวอร์ชัน)
    ทำให้ Code.gs กับหน้าเว็บคนละเลขเวอร์ชันก็ใช้งานร่วมกันได้
    ตราบใดที่ความสามารถครบ */
-const NEED_FEATURES = ["assets","users","pull"];
-const FEATURE_LABEL = { assets:"ดึงรายการตรวจนับ", users:"รายชื่อผู้ตรวจนับ", pull:"ดึงผลตรวจนับ" };
+const NEED_FEATURES = ["assets","users","pull","photo_upload"];
+const FEATURE_LABEL = { assets:"ดึงรายการตรวจนับ", users:"รายชื่อผู้ตรวจนับ", pull:"ดึงผลตรวจนับ", photo_upload:"อัปโหลดรูปเข้า Drive" };
 function missingFeatures(data){
   const f = (data && Array.isArray(data.features)) ? data.features : null;
   if(!f) return NEED_FEATURES.map(k=>FEATURE_LABEL[k]||k);   // ไม่บอก features = เก่ามาก

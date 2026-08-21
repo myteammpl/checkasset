@@ -126,6 +126,26 @@
   .fincell.bv.high .fl,.fincell.bv.high .fv{color:#9a6a12}
   .fin-warn{grid-column:1/-1;font-size:12px;font-weight:700;color:#9a6a12;background:#fdeccf;
     border:1px solid #e6cf9a;border-radius:8px;padding:6px 10px;text-align:center}
+  /* สถานะ รอบัญชีตรวจสอบ (หน่วยงานแนบรูป) */
+  .badge.pending{background:#e7f0ff;color:#1a56c4;border:1px solid #bcd4ff}
+  .card.pending{border-left:4px solid #4a86e8;background:#f6faff}
+  .review-banner{background:#e7f0ff;border:1px solid #bcd4ff;border-radius:12px;padding:10px 12px;
+    margin-bottom:12px;font-size:13px;color:#1a3f7a;font-weight:700}
+  .review-banner small{display:block;font-weight:600;color:#4a6795;margin-top:2px;font-size:11.5px}
+  .unit-scope{background:var(--field-soft);border:1px solid #bfe0cc;border-radius:10px;
+    padding:8px 12px;margin-bottom:10px;font-size:12.5px;font-weight:700;color:var(--field-dark)}
+  /* จัดการผู้ใช้ */
+  .urole{font-size:10.5px;font-weight:700;padding:1px 7px;border-radius:6px;margin-left:4px}
+  .urole.acc{background:#eaf4ee;color:var(--field-dark)}
+  .urole.unit{background:#e7f0ff;color:#1a56c4}
+  .upin{font-size:10px;font-weight:700;padding:1px 6px;border-radius:6px;margin-left:3px}
+  .upin.ok{background:#eef7f0;color:#4a9d6e}
+  .upin.no{background:#fdeccf;color:#9a6a12}
+  .adduser-v18{display:grid;grid-template-columns:1fr;gap:8px}
+  .adduser-v18 input,.adduser-v18 select{width:100%;padding:11px;border:1.5px solid var(--line);
+    border-radius:10px;font-size:14px;font-family:inherit}
+  .adduser-v18 button{padding:11px;border:none;border-radius:10px;background:var(--field);color:#fff;
+    font-weight:800;font-size:14px;cursor:pointer;font-family:inherit}
   .sheet-hint{font-size:13px;color:#4a554f;background:#fff;border:1px solid var(--line);
     border-radius:10px;padding:9px 12px;margin-bottom:12px}
   .sheet-hint b{color:var(--field-dark)}
@@ -337,6 +357,15 @@
   .adduser input{flex:1;padding:12px 14px;font-size:15px;border:1.5px solid var(--line);border-radius:11px}
   .adduser button{flex:0 0 auto;padding:12px 18px;border:none;border-radius:11px;
     background:var(--field);color:#fff;font-size:15px;font-weight:700;cursor:pointer}
+  /* ฟอร์มเพิ่มผู้ใช้ v18 — แนวตั้ง มีป้ายกำกับ อ่านง่าย */
+  .adduser2{display:block;background:#f7faf7;border:1px solid var(--line);border-radius:12px;
+    padding:12px;margin-bottom:12px}
+  .adduser2 .fl{display:block;font-size:11.5px;font-weight:800;color:var(--grey);margin:8px 0 4px}
+  .adduser2 .fl:first-child{margin-top:0}
+  .adduser2 input,.adduser2 select{display:block;width:100%;box-sizing:border-box;padding:12px 14px;
+    font-size:15px;border:1.5px solid var(--line);border-radius:11px;font-family:inherit;background:#fff}
+  .adduser2 .addbtn{width:100%;margin-top:12px;padding:13px;border:none;border-radius:11px;
+    background:var(--field);color:#fff;font-size:15px;font-weight:800;cursor:pointer;font-family:inherit}
   .verwarn{background:var(--red-soft);border:1.5px solid #e0b4b4;border-radius:12px;
     padding:12px 14px;margin:0 12px 10px;font-size:13px;color:var(--red);line-height:1.55;font-weight:600}
   .whopick{background:var(--amber-soft);border:1px solid #e6cf9a;border-radius:12px;
@@ -387,6 +416,27 @@
   .namebtn:active{transform:scale(.99)}
   .namebtn .av{flex:0 0 auto;width:38px;height:38px;border-radius:99px;background:var(--field);
     color:#fff;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:800}
+  .namebtn .nb-sub{display:block;font-size:11.5px;font-weight:600;color:var(--grey);margin-top:1px}
+  /* หน้าต่างเข้าสู่ระบบ (PIN) */
+  .login-bg{position:fixed;inset:0;z-index:120;background:rgba(20,32,25,.55);
+    display:flex;align-items:center;justify-content:center;padding:20px}
+  .login-card{background:#fff;border-radius:18px;padding:24px 22px 18px;width:100%;max-width:340px;
+    text-align:center;box-shadow:0 20px 50px rgba(0,0,0,.28)}
+  .login-av{width:56px;height:56px;border-radius:99px;background:var(--field);color:#fff;
+    display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:800;margin:0 auto 10px}
+  .login-name{font-size:18px;font-weight:800;color:var(--ink)}
+  .login-role{font-size:12px;font-weight:700;color:var(--field);margin-top:2px}
+  .login-prompt{font-size:13px;color:var(--grey);margin:12px 0 8px}
+  .login-pin{width:100%;padding:13px;border:1.5px solid var(--line);border-radius:12px;
+    font-size:20px;text-align:center;letter-spacing:6px;font-weight:700;margin-bottom:10px;font-family:inherit}
+  .login-pin:focus{outline:none;border-color:var(--field)}
+  .login-err{background:#fdecea;color:#b3261e;border-radius:9px;padding:8px 10px;font-size:12.5px;
+    font-weight:700;margin-bottom:10px}
+  .login-go{width:100%;padding:13px;border:none;border-radius:12px;background:var(--field);color:#fff;
+    font-size:15px;font-weight:800;cursor:pointer;font-family:inherit}
+  .login-go:disabled{opacity:.6}
+  .login-cancel{width:100%;padding:10px;border:none;background:none;color:var(--grey);
+    font-size:13px;font-weight:600;cursor:pointer;margin-top:6px;font-family:inherit}
   .wholist{width:100%;max-width:400px;display:flex;flex-direction:column;gap:10px}
   .whobtn{display:flex;align-items:center;gap:13px;width:100%;text-align:left;
     border:1.5px solid var(--line);border-radius:14px;padding:16px 18px;background:#fff;
@@ -511,8 +561,25 @@
   <div id="cloudInfo" class="cloudinfo hide"></div>
   <div id="parseStatus" class="parsing hide"></div>
   <div class="upload-note">
-    เลือกชื่อครั้งเดียว เครื่องนี้จะจำไว้<br>
-    เปลี่ยนชื่อภายหลังได้ที่ ⚙︎ ตั้งค่า
+    เลือกชื่อของคุณ แล้วใส่รหัสเข้าใช้งาน<br>
+    เข้าครั้งแรกให้ตั้งรหัสของคุณเอง · เปลี่ยนผู้ใช้ได้ที่ ⚙︎ ตั้งค่า
+  </div>
+</div>
+
+<!-- ===== หน้าต่างเข้าสู่ระบบ (PIN) ===== -->
+<div id="loginModal" class="login-bg hide">
+  <div class="login-card">
+    <div class="login-av" id="loginAv">?</div>
+    <div class="login-name" id="loginName">—</div>
+    <div class="login-role" id="loginRole"></div>
+    <div class="login-prompt" id="loginPrompt">ใส่รหัสผ่าน</div>
+    <input id="loginPin" type="password" inputmode="numeric" autocomplete="off"
+           maxlength="6" placeholder="รหัส 4–6 หลัก" class="login-pin">
+    <input id="loginPin2" type="password" inputmode="numeric" autocomplete="off"
+           maxlength="6" placeholder="ยืนยันรหัสอีกครั้ง" class="login-pin hide">
+    <div class="login-err hide" id="loginErr"></div>
+    <button class="login-go" id="loginGo" onclick="submitLogin()">เข้าสู่ระบบ</button>
+    <button class="login-cancel" onclick="closeLogin()">ยกเลิก</button>
   </div>
 </div>
 
@@ -538,6 +605,7 @@
     <div><b id="stTotal">0</b><span>ทั้งหมด</span></div>
     <div><b id="stPct">0%</b><span>คืบหน้า</span></div>
     <div><b id="stIssue">0</b><span>มีประเด็น</span></div>
+    <div id="stPendWrap"><b id="stPending">0</b><span>📷 รอตรวจสอบ</span></div>
   </div>
 </header>
 
@@ -557,6 +625,7 @@
       <div class="chip" data-f="todo">ยังไม่นับ</div>
       <div class="chip" data-f="done">นับแล้ว</div>
       <div class="chip amber" data-f="issue">มีประเด็น</div>
+      <div class="chip" data-f="pending">📷 รอตรวจสอบ</div>
       <div class="chip" data-f="qr">ต้องติด QR</div>
     </div>
     <div class="chips issue-chips" id="issueChips"></div>
@@ -607,6 +676,9 @@
     <div class="sumcard"><div class="k">ยังไม่นับ</div><div class="v" id="sumTodo" style="color:var(--grey)">0</div></div>
     <div class="sumcard"><div class="k">มีประเด็น (รอตรวจ)</div><div class="v" id="sumIssue" style="color:var(--amber)">0</div></div>
     <div class="sumcard"><div class="k">สูญหาย</div><div class="v" id="sumLost" style="color:var(--red)">0</div></div>
+    <div class="sumcard" onclick="jumpPending()" style="cursor:pointer;grid-column:1 / -1;background:#f6faff">
+      <div class="k">📷 มีรูปแนบ รอบัญชีตรวจสอบ (แตะเพื่อดูรายการ)</div>
+      <div class="v" id="sumPending" style="color:#1a56c4">0</div></div>
     <div class="sumcard" onclick="jumpQR()" style="cursor:pointer;grid-column:1 / -1">
       <div class="k">🏷️ ต้องปริ้น QR ติดเพิ่ม (แตะเพื่อดูรายการ)</div>
       <div class="v" id="sumQR" style="color:var(--blue)">0</div></div>
@@ -637,10 +709,10 @@
 <div id="pageSetup" class="page hide">
   <h2>ตั้งค่า</h2>
   <div class="field-group">
-    <label>ผู้ตรวจนับ (เลือกชื่อของคุณ)</label>
-    <div class="desc">เลือกชื่อคุณจากรายการ — จะบันทึกลง Google Sheet ว่ารายการไหนใครนับ</div>
-    <select id="selName"><option value="">— เลือกชื่อผู้ตรวจนับ —</option></select>
-    <button class="btn-ghost" style="margin-top:10px" onclick="changeName()">🔁 เปลี่ยนชื่อผู้ตรวจนับ</button>
+    <label>ผู้ใช้ที่เข้าสู่ระบบ</label>
+    <div class="desc" id="whoDesc">—</div>
+    <select id="selName" class="hide"></select>
+    <button class="btn-ghost" style="margin-top:10px" onclick="changeName()">🔁 สลับผู้ใช้ / ออกจากระบบ</button>
   </div>
   <div class="field-group">
     <label>ที่อยู่ศูนย์กลาง (Web App URL)</label>
@@ -663,19 +735,31 @@
     ใช้เมื่อผู้ดูแลอัปเดตข้อมูลในชีต "รายการตรวจนับ" แล้ว
   </div>
 
+  <div id="adminUsers">
   <div class="step-note" style="margin-bottom:10px">
-    <b>รายชื่อผู้ตรวจนับ (สำหรับผู้ดูแล)</b><br>
-    เพิ่มชื่อทีมที่นี่ครั้งเดียว — ทุกเครื่องจะเห็นรายชื่อเดียวกัน
+    <b>จัดการผู้ใช้ (เฉพาะนักบัญชี)</b><br>
+    ชื่อผู้ใช้: ชื่ออังกฤษ + อักษรแรกของนามสกุล เช่น <b>somchai s</b> · สมาชิกหน่วยงานตั้งรหัสเองตอนเข้าครั้งแรก
   </div>
   <button class="btn-ghost" onclick="loadUsers(true)" style="margin-bottom:10px">
     ⬇︎ โหลดรายชื่อจากศูนย์กลาง</button>
   <div id="userStatus" class="status-line hide" style="white-space:pre-line"></div>
   <div id="userList" class="userlist"></div>
-  <div class="adduser">
-    <input id="inpNewUser" type="text" placeholder="พิมพ์ชื่อผู้ตรวจนับ" autocomplete="off">
-    <button onclick="addUser()">+ เพิ่ม</button>
+  <div class="adduser2">
+    <label class="fl">1) ชื่อผู้ใช้ (ชื่ออังกฤษ + อักษรแรกนามสกุล เช่น somchai s)</label>
+    <input id="inpNewUser" type="text" placeholder="พิมพ์ชื่อผู้ใช้ที่นี่" autocomplete="off">
+    <label class="fl">2) บทบาท</label>
+    <select id="inpNewRole" onchange="onRoleChange()">
+      <option value="acc">นักบัญชี — เห็นทุกแผนก</option>
+      <option value="unit">หน่วยงาน — เห็นเฉพาะแผนกตัวเอง</option>
+    </select>
+    <div id="deptWrap" class="hide">
+      <label class="fl">3) แผนกที่ดูแล (เฉพาะหน่วยงาน)</label>
+      <select id="inpNewDept"><option value="">— เลือกแผนก —</option></select>
+    </div>
+    <button class="addbtn" onclick="addUser()">+ เพิ่มผู้ใช้เข้ารายการ</button>
   </div>
-  <button class="btn-ghost" onclick="saveUsers()" style="margin-bottom:18px">💾 บันทึกรายชื่อขึ้นศูนย์กลาง</button>
+  <button class="btn-primary" onclick="saveUsers()" style="width:100%;margin-bottom:18px">💾 บันทึกรายชื่อขึ้นศูนย์กลาง (ทำหลังเพิ่มครบ)</button>
+  </div>
   <div class="mini" style="text-align:left;padding:0 2px 0">
     ทำครั้งเดียวหลังอัปโหลด Excel — จากนั้นทีมงานเปิดแอปแล้วเลือก "โหลดจากศูนย์กลาง" ได้เลย
     ไม่ต้องส่งไฟล์ Excel ให้ใคร
@@ -702,6 +786,7 @@
   <h3 id="shAsset"></h3>
   <div class="sdesc" id="shDesc"></div>
   <div class="sinfo" id="shInfo"></div>
+  <div id="shReview" class="review-banner" style="display:none"></div>
   <div id="shFin"></div>
   <div id="shPrev"></div>
   <div class="sheet-hint">กรอก<b>จำนวน</b>ในแต่ละสถานะ (รหัสเดียวมีหลายสถานะได้)</div>
@@ -757,7 +842,7 @@
    ใส่แล้วทุกคนเปิดเว็บใช้ได้เลย ไม่ต้องตั้งค่าอะไร
    ถ้าเว้นว่าง ("") ระบบจะให้ผู้ใช้กรอก URL เอง
    ============================================================ */
-const BUILT_IN_URL = "https://script.google.com/macros/s/AKfycbwd5FFmeY49sqZBspRnK5B2_CCiRkmPz2KrhmCrER3auTsM3vGTzaiq-iwlpSTPdZO-bA/exec";
+const BUILT_IN_URL = "https://script.google.com/macros/s/AKfycbzmcfLJQKjY6vFltowL9NVOMBT0kAizANpwRXhaeRXcxuiwaasI9z7zQTFt1sC6LZZw2w/exec";
 
 const STATUSES = [
   {id:1, label:"สินทรัพย์ใช้งาน", cls:"s1"},
@@ -983,23 +1068,25 @@ async function startScreen(isRetry=false){
     const data=await res.json();
     if(!(data && Array.isArray(data.users))) throw new Error("no-users");
 
-    USERS=data.users;
+    USERS=(data.users||[]).map(normUser_);
     localStorage.setItem("assetcount_2026_users", JSON.stringify(USERS));
 
     if(!USERS.length){
       hideBootLoading();
       box.innerHTML="";
       st.classList.remove("hide"); st.classList.add("err");
-      st.innerHTML="ยังไม่มีรายชื่อผู้ตรวจนับในศูนย์กลาง<br>"
+      st.innerHTML="ยังไม่มีรายชื่อผู้ใช้ในศูนย์กลาง<br>"
         +"ให้ผู้ดูแลเพิ่มชื่อในชีต \"ผู้ตรวจนับ\" ของ Google Sheet ก่อน";
       return;
     }
 
     hideBootLoading();
-    box.innerHTML = USERS.map(u=>
-      '<button class="namebtn" onclick="pickName(\''+String(u).replace(/'/g,"\\'")+'\')">'
-      +'<span class="av">'+esc(String(u).trim().charAt(0).toUpperCase())+'</span>'
-      +'<span>'+esc(u)+'</span></button>').join("");
+    box.innerHTML = USERS.map(u=>{
+      const sub = u.role==="unit" ? ("หน่วยงาน · "+(u.dept||"ยังไม่ระบุแผนก")) : "นักบัญชี · เห็นทุกแผนก";
+      return '<button class="namebtn" onclick="openLogin(\''+String(u.name).replace(/'/g,"\\'")+'\')">'
+        +'<span class="av">'+esc(String(u.name).trim().charAt(0).toUpperCase())+'</span>'
+        +'<span>'+esc(u.name)+'<span class="nb-sub">'+esc(sub)+(u.hasPin?"":" · ตั้งรหัสครั้งแรก")+'</span></span></button>';
+    }).join("");
 
   }catch(e){
     clearTimeout(timer);
@@ -1021,19 +1108,81 @@ async function startScreen(isRetry=false){
   }
 }
 
-/* เลือกชื่อผู้ตรวจนับ -> จำชื่อ แล้วโหลดรายการเข้าแอป */
-async function pickName(name){
-  counterName=String(name||"").trim();
-  if(!counterName) return;
-  localStorage.setItem(K_NAME, counterName);
-  updateWhoUI();
+/* ปรับ record ผู้ใช้ให้เป็นรูปแบบมาตรฐาน (รองรับ string เก่า) */
+function normUser_(u){
+  if(typeof u==="string") return {name:u, role:"acc", dept:"", hasPin:true};
+  return {name:String(u.name||"").trim(), role:(u.role==="unit"?"unit":"acc"),
+          dept:String(u.dept||"").trim(), hasPin:!!u.hasPin};
+}
 
-  // มีรายการเก็บไว้แล้ว -> เข้าแอปเลย
+/* ===== เข้าสู่ระบบด้วย PIN ===== */
+let loginTarget=null;   // ชื่อผู้ใช้ที่กำลัง login
+function openLogin(name){
+  const u=userByName(name); if(!u){ toast("ไม่พบผู้ใช้"); return; }
+  loginTarget=u;
+  document.getElementById("loginAv").textContent=String(u.name).trim().charAt(0).toUpperCase();
+  document.getElementById("loginName").textContent=u.name;
+  document.getElementById("loginRole").textContent=
+    (u.role==="unit"?("หน่วยงาน · แผนก "+(u.dept||"—")):"นักบัญชี · เห็นทุกแผนก");
+  const p2=document.getElementById("loginPin2");
+  const prompt=document.getElementById("loginPrompt");
+  const go=document.getElementById("loginGo");
+  if(u.hasPin){ prompt.textContent="ใส่รหัสผ่านเพื่อเข้าใช้งาน"; p2.classList.add("hide"); go.textContent="เข้าสู่ระบบ"; }
+  else { prompt.textContent="เข้าครั้งแรก — ตั้งรหัสของคุณ (4–6 หลัก)"; p2.classList.remove("hide"); go.textContent="ตั้งรหัสและเข้าใช้งาน"; }
+  document.getElementById("loginPin").value="";
+  document.getElementById("loginPin2").value="";
+  const err=document.getElementById("loginErr"); err.classList.add("hide"); err.textContent="";
+  document.getElementById("loginModal").classList.remove("hide");
+  setTimeout(()=>document.getElementById("loginPin").focus(),100);
+}
+function closeLogin(){ document.getElementById("loginModal").classList.add("hide"); loginTarget=null; }
+function loginError(msg){
+  const err=document.getElementById("loginErr"); err.textContent=msg; err.classList.remove("hide");
+  document.getElementById("loginGo").disabled=false;
+}
+async function submitLogin(){
+  if(!loginTarget) return;
+  const u=loginTarget;
+  const pin=(document.getElementById("loginPin").value||"").trim();
+  const go=document.getElementById("loginGo");
+  if(!/^\d{4,6}$/.test(pin)){ loginError("รหัสต้องเป็นตัวเลข 4–6 หลัก"); return; }
+  if(!u.hasPin){
+    const pin2=(document.getElementById("loginPin2").value||"").trim();
+    if(pin!==pin2){ loginError("รหัสยืนยันไม่ตรงกัน"); return; }
+  }
+  go.disabled=true;
+  const action=u.hasPin ? "login" : "set_pin";
+  try{
+    const res=await fetch(webAppUrl,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},
+      body:JSON.stringify({action:action, name:u.name, pin:pin})});
+    const data=await res.json();
+    if(!(data && data.ok)){
+      if(data && data.need_set){   // เผลอมองว่ามีรหัส แต่จริง ๆ ยังไม่ตั้ง -> สลับเป็นตั้งรหัส
+        u.hasPin=false; openLogin(u.name); loginError("บัญชีนี้ยังไม่ได้ตั้งรหัส — ตั้งรหัสใหม่"); return;
+      }
+      loginError((data&&data.error)||"เข้าสู่ระบบไม่สำเร็จ"); return;
+    }
+    if(!data.user){   // ศูนย์กลางตอบ ok แต่ไม่มีข้อมูลผู้ใช้ = Code.gs เก่ายังไม่รองรับล็อกอิน
+      loginError("ศูนย์กลางยังไม่รองรับระบบเข้าสู่ระบบ — ผู้ดูแลต้อง Deploy Code.gs เวอร์ชันใหม่ก่อน"); return;
+    }
+    // สำเร็จ
+    const uu=userByName(u.name); if(uu) uu.hasPin=true;
+    localStorage.setItem("assetcount_2026_users", JSON.stringify(USERS));
+    applySession(data.user||{name:u.name, role:u.role, dept:u.dept});
+    closeLogin();
+    updateWhoUI();
+    loadAssetsAndEnter();
+  }catch(e){
+    loginError("เชื่อมต่อไม่ได้ — ตรวจอินเทอร์เน็ตแล้วลองใหม่");
+  }
+}
+
+/* โหลดรายการสินทรัพย์แล้วเข้าแอป (ใช้หลัง login สำเร็จ) */
+async function loadAssetsAndEnter(){
   let saved=null;
   try{ saved=JSON.parse(localStorage.getItem(K_ASSETS)||"null"); }catch(e){}
   if(saved && saved.length){ ASSETS=saved; enterApp(); return; }
 
-  // ยังไม่มีรายการ -> ดึงจากชีต "รายการตรวจนับ"
   showBootLoading("กำลังเตรียมข้อมูล",
     'กำลังโหลดรายการตรวจนับ<span class="boot-dots"></span>',
     "ครั้งแรกอาจใช้เวลาสักครู่");
@@ -1077,8 +1226,28 @@ function showNameScreen(){
   startScreen();
   window.scrollTo(0,0);
 }
-/* แตะชื่อบนหัวจอ -> เปลี่ยนผู้ตรวจนับ */
-function changeCounter(){ showNameScreen(); }
+/* แตะชื่อบนหัวจอ -> ออกจากระบบ แล้วกลับไปหน้าเข้าสู่ระบบ */
+function changeCounter(){
+  if(!confirm("ออกจากระบบและสลับผู้ใช้?")) return;
+  clearSession(); updateWhoUI(); showNameScreen();
+}
+
+/* ปรับ UI ตามบทบาท: หน่วยงานเห็นเฉพาะแผนกตัวเอง + ซ่อนแดชบอร์ด/สรุปรวม */
+function applyRoleUI(){
+  const isU=isUnit();
+  const nd=document.getElementById("navDash"), ns=document.getElementById("navSummary");
+  if(nd) nd.style.display=isU?"none":"";
+  if(ns) ns.style.display=isU?"none":"";
+  const sf=document.querySelector("#pageCount .subfilter");
+  if(sf) sf.style.display=isU?"none":"";
+  let us=document.getElementById("unitScope");
+  if(isU){
+    if(!us && sf){ us=document.createElement("div"); us.id="unitScope"; us.className="unit-scope";
+      sf.parentNode.insertBefore(us, sf); }
+    if(us){ us.textContent="👁 เห็นเฉพาะแผนก: "+(myDept||"(ยังไม่ระบุแผนก)"); us.style.display=""; }
+    curDiv=""; curSec="";
+  } else if(us){ us.style.display="none"; }
+}
 
 function enterApp(){
   hideBootLoading();
@@ -1088,6 +1257,7 @@ function enterApp(){
   const av=document.getElementById("appVer"); if(av) av.textContent="v"+APP_CODE_VERSION;
   renderUsers(); updateWhoUI(); loadUsers(false); checkVersion();
   updateDataInfo();
+  applyRoleUI();
   buildFilters(); refreshSecDropdown(); render(); updateStats(); updateQueueBadge();
   if(!webAppUrl){ setSync("off","ยังไม่ตั้งค่าศูนย์กลาง (แตะ ตั้งค่า)"); }
   else { refreshAll(false); }
@@ -1111,40 +1281,93 @@ function updateDataInfo(){
       + "<br>อัปโหลดเมื่อ: "+(meta.at?new Date(meta.at).toLocaleString("th-TH"):"—");
   }catch(e){}
 }
-/* ===== รายชื่อผู้ตรวจนับ ===== */
-let USERS=[];
-try{ USERS=JSON.parse(localStorage.getItem("assetcount_2026_users")||"[]"); }catch(e){ USERS=[]; }
+/* ===== รายชื่อผู้ใช้ + สิทธิ์ (v18) ===== */
+const K_SESSION = "assetcount_2026_session_v18";
+let USERS=[];   // [{name, role:'acc'|'unit', dept, hasPin}]
+try{
+  USERS=JSON.parse(localStorage.getItem("assetcount_2026_users")||"[]");
+  // เผื่อ cache เก่าเป็น array ของ string -> แปลงเป็น object
+  USERS=USERS.map(u=> typeof u==="string" ? {name:u, role:"acc", dept:"", hasPin:true} : u);
+}catch(e){ USERS=[]; }
+
+let session=null, myRole="acc", myDept="";
+try{ session=JSON.parse(localStorage.getItem(K_SESSION)||"null"); }catch(e){ session=null; }
+if(session && session.name){ counterName=session.name; myRole=session.role||"acc"; myDept=session.dept||""; }
+
+function userByName(n){ n=String(n||"").trim(); return USERS.find(u=>u && u.name===n)||null; }
+function isUnit(){ return myRole==="unit"; }
+function isAcc(){ return myRole!=="unit"; }
+function roleLabel(r){ return r==="unit"?"หน่วยงาน":"นักบัญชี"; }
+function applySession(user){
+  session={name:user.name, role:user.role||"acc", dept:user.dept||""};
+  counterName=session.name; myRole=session.role; myDept=session.dept;
+  localStorage.setItem(K_SESSION, JSON.stringify(session));
+  localStorage.setItem(K_NAME, counterName);
+}
+function clearSession(){
+  session=null; myRole="acc"; myDept=""; counterName="";
+  localStorage.removeItem(K_SESSION); localStorage.removeItem(K_NAME);
+}
+/* หน่วยงานเห็นเฉพาะแผนกตัวเอง */
+function inMyScope(x){ return isAcc() || (String(x.sec||"")===myDept); }
 
 function renderUsers(){
   const box=document.getElementById("userList"); if(!box) return;
+  // เฉพาะนักบัญชีเท่านั้นที่จัดการผู้ใช้ได้
+  const admin=document.getElementById("adminUsers");
+  if(admin) admin.style.display = isAcc() ? "" : "none";
   if(!USERS.length){ box.innerHTML='<div class="userempty">ยังไม่มีรายชื่อ — เพิ่มด้านล่าง</div>'; }
   else{
-    box.innerHTML=USERS.map((u,i)=>'<div class="userrow"><span class="un">'+esc(u)+'</span>'
-      +'<button onclick="removeUser('+i+')" title="ลบ">✕</button></div>').join("");
+    box.innerHTML=USERS.map((u,i)=>{
+      const badge = u.role==="unit"
+        ? '<span class="urole unit">หน่วยงาน · '+esc(u.dept||"ไม่ระบุแผนก")+'</span>'
+        : '<span class="urole acc">นักบัญชี</span>';
+      const pin = u.hasPin ? '<span class="upin ok">มีรหัส</span>' : '<span class="upin no">ยังไม่ตั้งรหัส</span>';
+      return '<div class="userrow"><span class="un">'+esc(u.name)+' '+badge+' '+pin+'</span>'
+        +'<button onclick="removeUser('+i+')" title="ลบ">✕</button></div>';
+    }).join("");
   }
-  // เติม dropdown
-  const sel=document.getElementById("selName"); if(!sel) return;
-  const cur=counterName;
-  sel.innerHTML='<option value="">— เลือกชื่อผู้ตรวจนับ —</option>'
-    + USERS.map(u=>'<option value="'+esc(u)+'">'+esc(u)+'</option>').join("");
-  if(cur && USERS.indexOf(cur)>=0) sel.value=cur;
-  else if(cur && USERS.length===0) { /* ยังไม่โหลดรายชื่อ */ }
+  // dropdown เดิม (สำรอง) — ไม่ได้ใช้ล็อกอินแล้ว
+  const sel=document.getElementById("selName");
+  if(sel){ sel.innerHTML='<option value="">— รายชื่อผู้ใช้ —</option>'
+      + USERS.map(u=>'<option value="'+esc(u.name)+'">'+esc(u.name)+'</option>').join(""); }
 }
 function addUser(){
   const el=document.getElementById("inpNewUser");
+  const roleEl=document.getElementById("inpNewRole");
+  const deptEl=document.getElementById("inpNewDept");
   const n=(el.value||"").trim();
-  if(!n){ toast("พิมพ์ชื่อก่อน"); return; }
-  if(USERS.indexOf(n)>=0){ toast("มีชื่อนี้อยู่แล้ว"); return; }
-  USERS.push(n); el.value="";
+  if(!n){ toast("พิมพ์ชื่อผู้ใช้ก่อน (ชื่ออังกฤษ + อักษรแรกนามสกุล)"); return; }
+  if(USERS.some(u=>u.name===n)){ toast("มีชื่อนี้อยู่แล้ว"); return; }
+  const role=(roleEl&&roleEl.value)==="unit"?"unit":"acc";
+  const dept=role==="unit"?((deptEl&&deptEl.value||"").trim()):"";
+  if(role==="unit" && !dept){ toast("เลือกแผนกให้สมาชิกหน่วยงานก่อน"); return; }
+  USERS.push({name:n, role:role, dept:dept, hasPin:false});
+  el.value=""; if(deptEl) deptEl.value="";
   localStorage.setItem("assetcount_2026_users", JSON.stringify(USERS));
-  renderUsers(); toast('เพิ่ม "'+n+'" แล้ว · อย่าลืมกดบันทึกขึ้นศูนย์กลาง');
+  renderUsers(); toast('เพิ่ม "'+n+'" แล้ว · กดบันทึกขึ้นศูนย์กลาง');
 }
 function removeUser(i){
-  const n=USERS[i];
+  const n=USERS[i]&&USERS[i].name;
   if(!confirm('ลบ "'+n+'" ออกจากรายชื่อ?')) return;
   USERS.splice(i,1);
   localStorage.setItem("assetcount_2026_users", JSON.stringify(USERS));
-  renderUsers(); toast("ลบแล้ว · อย่าลืมกดบันทึกขึ้นศูนย์กลาง");
+  renderUsers(); toast("ลบแล้ว · กดบันทึกขึ้นศูนย์กลาง");
+}
+/* เติมตัวเลือกแผนกใน dropdown เพิ่มสมาชิก (จากรายการ asset) */
+function fillDeptOptions(){
+  const sel=document.getElementById("inpNewDept"); if(!sel) return;
+  const cur=sel.value;
+  const secs=[...new Set(ASSETS.map(x=>x.sec).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'th'));
+  sel.innerHTML='<option value="">— เลือกแผนก —</option>'+secs.map(s=>'<option value="'+esc(s)+'">'+esc(s)+'</option>').join("");
+  if(cur) sel.value=cur;
+}
+function onRoleChange(){
+  const roleEl=document.getElementById("inpNewRole");
+  const wrap=document.getElementById("deptWrap");
+  if(!roleEl||!wrap) return;
+  if(roleEl.value==="unit"){ wrap.classList.remove("hide"); fillDeptOptions(); }
+  else wrap.classList.add("hide");
 }
 async function saveUsers(){
   if(!webAppUrl){ toast("ตั้งค่า URL ศูนย์กลางก่อน"); return; }
@@ -1180,9 +1403,8 @@ async function loadUsers(manual){
         +"→ ผู้ดูแลต้องอัปเดต Code.gs แล้ว Deploy แบบ New version");
       return;
     }
-    USERS=data.users;
+    USERS=(data.users||[]).map(normUser_);
     localStorage.setItem("assetcount_2026_users", JSON.stringify(USERS));
-    if(counterName && USERS.indexOf(counterName)<0){ counterName=""; localStorage.removeItem(K_NAME); }
     renderUsers(); updateWhoUI();
     if(USERS.length===0) say("warn","ยังไม่มีรายชื่อในศูนย์กลาง — ผู้ดูแลเพิ่มชื่อด้านล่างแล้วกดบันทึก");
     else say("ok","โหลดรายชื่อแล้ว "+USERS.length+" คน");
@@ -1211,12 +1433,12 @@ async function checkVersion(){
 }
 
 function changeName(){
-  counterName=""; localStorage.removeItem(K_NAME);
-  updateWhoUI(); showNameScreen();
+  if(!confirm("ออกจากระบบและสลับผู้ใช้?")) return;
+  clearSession(); updateWhoUI(); showNameScreen();
 }
 function updateWhoUI(){
   const pill=document.getElementById("whoPill");
-  if(pill) pill.textContent = counterName || "ยังไม่เลือกผู้ตรวจนับ";
+  if(pill) pill.textContent = counterName ? (counterName+" · "+roleLabel(myRole)) : "ยังไม่เข้าสู่ระบบ";
   const w=document.getElementById("whoPick");
   if(w) w.classList.toggle("hide", !!counterName);
 }
@@ -1273,10 +1495,14 @@ function refreshSecDropdown(){
   if(curDiv && window._divsMap[curDiv]) [...window._divsMap[curDiv]].sort().forEach(s=>{
     const o=document.createElement("option"); o.value=s; o.textContent=s; fSec.appendChild(o); });
 }
+/* นับแล้วจริง (บัญชียืนยัน) — รายการที่หน่วยงานแนบรูปไว้แต่ยังไม่ยืนยัน ไม่ถือว่านับแล้ว */
+function counted(r){ return !!(r && !r.pending); }
 function matchFilter(x){
+  if(!inMyScope(x)) return false;   // หน่วยงานเห็นเฉพาะแผนกตัวเอง
   const k=keyOf(x), r=results[k];
-  if(curFilter==="todo"&&r) return false;
-  if(curFilter==="done"&&!r) return false;
+  if(curFilter==="todo"&&counted(r)) return false;
+  if(curFilter==="done"&&!counted(r)) return false;
+  if(curFilter==="pending"&&!(r&&r.pending)) return false;
   if(curFilter==="issue"&&!(r&&hasIssue(r))) return false;
   if(curFilter.indexOf("issue:")===0){
     const sid=Number(curFilter.split(":")[1]||0);
@@ -1299,6 +1525,7 @@ function moneyShort(n){
 }
 /* อยู่ในขอบเขตที่กรอง (ด้าน/แผนก/ค้นหา) — ไม่รวมตัวกรองสถานะ ใช้คำนวณตัวเลขบนชิป */
 function inScopeForChips(x){
+  if(!inMyScope(x)) return false;
   if(curDiv){ const d=x.div||"(ไม่ระบุด้าน)"; if(d!==curDiv) return false; }
   if(curSec&&x.sec!==curSec) return false;
   if(curSearch){ const q=curSearch.toLowerCase();
@@ -1339,8 +1566,15 @@ function render(){
   let html="";
   for(const x of filtered.slice(0,MAX_RENDER)){
     const k=keyOf(x), r=results[k];
-    let cls="card", badge='<span class="badge none">ยังไม่นับ</span>', btn="นับ", mark="";
-    if(r){ cls+=" counted";
+    let cls="card", badge='<span class="badge none">ยังไม่นับ</span>', btn=isUnit()?"แนบรูป":"นับ", mark="";
+    if(r && r.pending){
+      // หน่วยงานแนบรูปไว้ รอบัญชีตรวจสอบ
+      cls+=" pending";
+      badge='<span class="badge pending">📷 รอบัญชีตรวจสอบ</span>';
+      btn=isUnit()?"ดู/แก้รูป":"ตรวจสอบ";
+      if(r.by) mark += '<span class="by-mark">👤 '+esc(r.by)+'</span>';
+      if(r.photo) mark += '<span class="photo-chip">📷 มีรูป</span>';
+    } else if(r){ cls+=" counted";
       const sum=statusSummary(r);
       badge = sum.length
         ? sum.map(o=>'<span class="badge '+o.st.cls+'">'+o.st.label+' '+o.n+'</span>').join(" ")
@@ -1443,8 +1677,33 @@ function openSheet(k){
   qrEl.checked = !!(r && r.qr);
   document.getElementById("qrWrap").classList.toggle("on", qrEl.checked);
   document.getElementById("shNote").value=r?(r.note||""):"";
+  applySheetRoleUI(r);
   document.getElementById("sheetBg").classList.add("on");
   document.getElementById("sheet").classList.add("on");
+}
+
+/* ปรับหน้าตรวจนับตามบทบาท: หน่วยงาน = แนบรูปอย่างเดียว, บัญชี = เต็มรูปแบบ + รีวิวรูป */
+function applySheetRoleUI(r){
+  const isU=isUnit();
+  const show=(sel,on)=>{ const el=typeof sel==="string"?document.querySelector(sel):sel; if(el) el.style.display=on?"":"none"; };
+  show("#qtyGrid", !isU);
+  show("#sumRow", !isU);
+  show("#qrWrap", !isU);
+  const hint=document.querySelector("#sheet .sheet-hint"); if(hint) hint.style.display=isU?"none":"";
+  const saveBtn=document.querySelector("#sheet .btn-save");
+  if(saveBtn) saveBtn.textContent = isU ? "📷 ส่งรูปให้บัญชีตรวจสอบ" : "บันทึกผลนับ";
+  const rb=document.getElementById("shReview");
+  if(rb){
+    if(!isU && r && r.pending){
+      rb.style.display="";
+      rb.innerHTML="📷 หน่วยงานแนบรูปไว้ — "+esc(r.by||"")+" · รอบัญชีตรวจสอบ"
+        +"<small>ดูรูปด้านล่าง แล้วกรอกจำนวนเพื่อยืนยันผลนับ</small>";
+    } else if(isU){
+      rb.style.display="";
+      rb.innerHTML="โหมดหน่วยงาน — แนบรูปสภาพจริงของรายการนี้ แล้วกดส่งให้บัญชีตรวจสอบ"
+        + (r && r.pending ? "<small>ส่งรูปแล้ว · แก้ไข/ถ่ายใหม่แล้วส่งอีกได้</small>" : "");
+    } else rb.style.display="none";
+  }
 }
 function closeSheet(){ document.getElementById("sheetBg").classList.remove("on"); document.getElementById("sheet").classList.remove("on"); editingKey=null; }
 
@@ -1642,9 +1901,23 @@ function recalcSum(){
     +'<span class="diff '+dcls+'">'+dtxt+'</span></div>';
 }
 
+/* หน่วยงาน: ส่งเฉพาะรูป -> ขึ้นสถานะ "รอบัญชีตรวจสอบ" */
+function submitPendingPhoto(){
+  if(!editingKey) return;
+  if(!counterName){ toast("ยังไม่ได้เข้าสู่ระบบ"); return; }
+  const x=ASSETS.find(a=>keyOf(a)===editingKey);
+  if(!photoData && !photoUrlCur){ toast("แนบรูปก่อนส่งให้บัญชีตรวจสอบ"); return; }
+  if(!webAppUrl){ toast("ยังไม่ได้ตั้งค่าศูนย์กลาง"); return; }
+  const note=document.getElementById("shNote").value.trim();
+  const rec={ q:{}, qty:0, note:note, qr:0, photo:photoUrlCur, pending:1,
+              at:new Date().toISOString(), by:counterName };
+  saveToCloud(x, rec);
+}
+
 function saveCount(){
   if(!editingKey) return;
-  if(!counterName){ toast("กรุณาเลือกชื่อผู้ตรวจนับในหน้า ตั้งค่า ก่อน"); showPage('setup'); closeSheet(); return; }
+  if(!counterName){ toast("ยังไม่ได้เข้าสู่ระบบ"); showPage('setup'); closeSheet(); return; }
+  if(isUnit()){ return submitPendingPhoto(); }   // หน่วยงานทำได้แค่แนบรูป
   const x=ASSETS.find(a=>keyOf(a)===editingKey);
   const {q,total}=readSheetQty();
   const note=document.getElementById("shNote").value.trim();
@@ -1689,7 +1962,8 @@ function saveToCloud(x, rec){
   if(!document.getElementById("pageDash").classList.contains("hide")) renderDash();
 
   setSync("on", photoForQueue ? "บันทึกในเครื่องแล้ว · กำลังซิงค์ผลนับและรูป" : "บันทึกในเครื่องแล้ว · กำลังซิงค์ศูนย์กลาง");
-  toast(photoForQueue ? "✓ บันทึกแล้ว · รูปอยู่ในคิวอัปโหลด" : "✓ บันทึกแล้ว · ส่งศูนย์กลางเบื้องหลัง");
+  toast(rec.pending ? "📷 ส่งรูปให้บัญชีตรวจสอบแล้ว · รอยืนยันผล"
+                    : (photoForQueue ? "✓ บันทึกแล้ว · รูปอยู่ในคิวอัปโหลด" : "✓ บันทึกแล้ว · ส่งศูนย์กลางเบื้องหลัง"));
   renderTasks();
   processSyncQueue();
 }
@@ -1761,6 +2035,7 @@ function buildPayload(x, rec){
     qty:rec.qty||0, note:rec.note||"", qr:(rec.qr?1:0),
     photo:(photoData||""),
     photo_clear:(!photoData && !photoUrlCur)?1:0,
+    pending:(rec.pending?1:0),
     at:rec.at||new Date().toISOString(), by:rec.by||counterName||"",
     device:navigator.userAgent||""
   };
@@ -1791,10 +2066,12 @@ function statsFor(list){
   const q={1:0,2:0,3:0,4:0,5:0,6:0};   // จำนวน "ชิ้น" แยกตามสถานะ
   let over=0, under=0, sapQty=0, cntQty=0;
   let bvSum=0, bvIssue=0;   // มูลค่าตามบัญชี: รวมทั้งหมด / เฉพาะรายการที่มีประเด็น
+  let pending=0, bvPending=0;   // หน่วยงานแนบรูปไว้ รอบัญชีตรวจสอบ
   for(const x of list){
     sapQty += Number(x.q)||0;
     const bv=Number(x.bv)||0; bvSum += bv;
     const r=results[keyOf(x)];
+    if(r && r.pending){ pending++; bvPending += bv; continue; }
     if(r){ c++;
       if(hasIssue(r)){ iss++; bvIssue += bv; }
       if(hasLost(r)) lost++;
@@ -1805,9 +2082,9 @@ function statsFor(list){
       if(d!==0){ qtyDiff++; if(d>0) over+=d; else under+=(-d); }
     }
   }
-  return {t:t, c:c, remain:t-c, iss:iss, lost:lost, diff:qtyDiff,
+  return {t:t, c:c, remain:t-c-pending, iss:iss, lost:lost, diff:qtyDiff,
           q:q, over:over, under:under, sapQty:sapQty, cntQty:cntQty,
-          bvSum:bvSum, bvIssue:bvIssue,
+          bvSum:bvSum, bvIssue:bvIssue, pending:pending, bvPending:bvPending,
           pct: t? Math.round(c/t*100):0};
 }
 
@@ -1866,6 +2143,7 @@ function renderDash(){
     +'<div class="chips3">'
       +'<div><b>'+all.remain.toLocaleString()+'</b>คงเหลือ</div>'
       +'<div><b>'+all.iss.toLocaleString()+'</b>มีประเด็น</div>'
+      +'<div><b>'+(all.pending||0).toLocaleString()+'</b>📷 รอตรวจสอบ</div>'
       +'<div><b>'+all.lost.toLocaleString()+'</b>สูญหาย</div>'
       +'<div><b>'+all.diff.toLocaleString()+'</b>จำนวนไม่ตรง</div>'
     +'</div>'
@@ -1985,9 +2263,10 @@ async function pullRemote(manual){
       const k=String(r.asset)+"|"+String(r.sub||"0");
       const q={}; let tot=0;
       for(let i=1;i<=6;i++){ const v=Number(r["q"+i]||0); if(v>0){ q[i]=v; tot+=v; } }
-      if(tot===0 && !(r.note||"") && !Number(r.qr) && !(r.photo||"")) continue;   // ไม่มีข้อมูลจริง ข้าม
+      if(tot===0 && !(r.note||"") && !Number(r.qr) && !(r.photo||"") && !Number(r.pending)) continue;   // ไม่มีข้อมูลจริง ข้าม
       const remote={ q:q, qty:(r.qty===""||r.qty==null)?tot:Number(r.qty),
                      note:r.note||"", qr:(Number(r.qr)?1:0), photo:(r.photo||""),
+                     pending:(Number(r.pending)?1:0),
                      at:r.at||"", by:r.by||"" };
       fresh[k]=remote; added++;
     }
@@ -2028,20 +2307,22 @@ function startAutoPull(){
 }
 /* รายการในขอบเขตที่เลือก (ด้าน/แผนก) — ไม่สนคำค้นหา/ชิปกรอง */
 function scopeList(){
-  if(!curDiv && !curSec) return ASSETS;
   return ASSETS.filter(x=>{
+    if(!inMyScope(x)) return false;   // หน่วยงาน: เฉพาะแผนกตัวเอง
     if(curDiv){ const d=x.div||"(ไม่ระบุด้าน)"; if(d!==curDiv) return false; }
     if(curSec && x.sec!==curSec) return false;
     return true;
   });
 }
 function calcStats(list){
-  let counted=0,issue=0,lost=0,qrn=0;
-  for(const x of list){ const r=results[keyOf(x)]; if(r){ counted++;
-    if(hasIssue(r)) issue++; if(hasLost(r)) lost++; if(r.qr) qrn++; } }
+  let cnt=0,issue=0,lost=0,qrn=0,pending=0;
+  for(const x of list){ const r=results[keyOf(x)]; if(!r) continue;
+    if(r.pending){ pending++; continue; }
+    cnt++;
+    if(hasIssue(r)) issue++; if(hasLost(r)) lost++; if(r.qr) qrn++; }
   const total=list.length;
-  return {total:total, counted:counted, issue:issue, lost:lost, qrn:qrn,
-          remain:total-counted, pct: total?Math.round(counted/total*100):0};
+  return {total:total, counted:cnt, issue:issue, lost:lost, qrn:qrn, pending:pending,
+          remain:total-cnt-pending, pct: total?Math.round(cnt/total*100):0};
 }
 function updateStats(){
   // ---- แถบเขียวด้านบน: ตามด้าน/แผนกที่เลือก ----
@@ -2050,11 +2331,17 @@ function updateStats(){
   document.getElementById("stTotal").textContent=sc.total.toLocaleString();
   document.getElementById("stPct").textContent=sc.pct+"%";
   document.getElementById("stIssue").textContent=sc.issue.toLocaleString();
+  const pw=document.getElementById("stPendWrap"), pe=document.getElementById("stPending");
+  if(pe) pe.textContent=(sc.pending||0).toLocaleString();
+  if(pw) pw.style.display=(sc.pending>0)?"":"none";
   document.getElementById("hdrProg").style.width=sc.pct+"%";
   const sb=document.getElementById("scopeBar");
   if(sb){
-    sb.textContent=(curDiv||"ทุกด้าน")+" · "+(curSec||"ทุกแผนก");
-    sb.style.background=(curDiv||curSec)?"rgba(143,214,166,.32)":"rgba(255,255,255,.16)";
+    if(isUnit()){ sb.textContent="แผนก "+(myDept||"—")+" (เฉพาะแผนกของคุณ)"; sb.style.background="rgba(143,214,166,.32)"; }
+    else{
+      sb.textContent=(curDiv||"ทุกด้าน")+" · "+(curSec||"ทุกแผนก");
+      sb.style.background=(curDiv||curSec)?"rgba(143,214,166,.32)":"rgba(255,255,255,.16)";
+    }
   }
   // ---- หน้าสรุปผล: ภาพรวมทั้งหมดเสมอ ----
   const all=calcStats(ASSETS);
@@ -2062,7 +2349,15 @@ function updateStats(){
   document.getElementById("sumTodo").textContent=all.remain.toLocaleString();
   document.getElementById("sumIssue").textContent=all.issue.toLocaleString();
   document.getElementById("sumLost").textContent=all.lost.toLocaleString();
+  const pEl=document.getElementById("sumPending"); if(pEl) pEl.textContent=(all.pending||0).toLocaleString();
   const qEl=document.getElementById("sumQR"); if(qEl) qEl.textContent=all.qrn.toLocaleString();
+}
+function jumpPending(){
+  curFilter="pending";
+  document.querySelectorAll("#statusChips .chip").forEach(c=>c.classList.toggle("on", c.dataset.f==="pending"));
+  document.querySelectorAll("#issueChips .chip").forEach(c=>c.classList.remove("on"));
+  showPage('count'); render();
+  toast("แสดงเฉพาะรายการมีรูปแนบ รอบัญชีตรวจสอบ");
 }
 function jumpQR(){
   curFilter="qr";
@@ -2072,7 +2367,7 @@ function jumpQR(){
 }
 function renderDivProgress(){
   const map={};
-  for(const x of ASSETS){ const d=x.div||"(ไม่ระบุด้าน)"; if(!map[d])map[d]={t:0,c:0}; map[d].t++; if(results[keyOf(x)])map[d].c++; }
+  for(const x of ASSETS){ if(!inMyScope(x))continue; const d=x.div||"(ไม่ระบุด้าน)"; if(!map[d])map[d]={t:0,c:0}; map[d].t++; if(counted(results[keyOf(x)]))map[d].c++; }
   const box=document.getElementById("divProgress"); box.innerHTML="";
   Object.keys(map).sort((a,b)=>map[b].t-map[a].t).forEach(d=>{
     const {t,c}=map[d]; const pct=t?Math.round(c/t*100):0;
@@ -2089,22 +2384,22 @@ function persist(){
   catch(e){ toast("บันทึกไม่สำเร็จ (พื้นที่เต็ม)"); }
 }
 function saveSetup(){
-  counterName=document.getElementById("selName").value.trim();
+  // ผู้ใช้/บทบาท มาจากการล็อกอินแล้ว — ที่นี่บันทึกเฉพาะ URL ศูนย์กลาง
   webAppUrl=BUILT_IN_URL || document.getElementById("inpUrl").value.trim();
-  localStorage.setItem(K_NAME, counterName); localStorage.setItem(K_URL, webAppUrl);
+  localStorage.setItem(K_URL, webAppUrl);
   updateWhoUI();
   if(webAppUrl) loadUsers(false);
   const s=document.getElementById("setupStatus"); s.className="status-line ok"; s.classList.remove("hide");
   s.textContent="บันทึกแล้ว ✓ "+(webAppUrl?"พร้อมส่งเข้าศูนย์กลาง":"(ยังไม่ใส่ URL — เก็บในเครื่องอย่างเดียว)");
   updateResultInfo();
 }
-const APP_CODE_VERSION="17";   // เลขอ้างอิงเฉยๆ — ไม่ได้ใช้บล็อกการทำงานแล้ว
+const APP_CODE_VERSION="18";   // เลขอ้างอิงเฉยๆ — ไม่ได้ใช้บล็อกการทำงานแล้ว
 
 /* ความสามารถที่ระบบต้องมี (เช็กแทนการเทียบเลขเวอร์ชัน)
    ทำให้ Code.gs กับหน้าเว็บคนละเลขเวอร์ชันก็ใช้งานร่วมกันได้
    ตราบใดที่ความสามารถครบ */
-const NEED_FEATURES = ["assets","users","pull","photo_upload"];
-const FEATURE_LABEL = { assets:"ดึงรายการตรวจนับ", users:"รายชื่อผู้ตรวจนับ", pull:"ดึงผลตรวจนับ", photo_upload:"อัปโหลดรูปเข้า Drive" };
+const NEED_FEATURES = ["assets","users","pull","photo_upload","login"];
+const FEATURE_LABEL = { assets:"ดึงรายการตรวจนับ", users:"รายชื่อผู้ตรวจนับ", pull:"ดึงผลตรวจนับ", photo_upload:"อัปโหลดรูปเข้า Drive", login:"เข้าสู่ระบบ/รหัสผ่าน" };
 function missingFeatures(data){
   const f = (data && Array.isArray(data.features)) ? data.features : null;
   if(!f) return NEED_FEATURES.map(k=>FEATURE_LABEL[k]||k);   // ไม่บอก features = เก่ามาก
@@ -2179,7 +2474,10 @@ function showPage(p){
   if(p==="dash"){ renderDash(); }
   if(p==="summary"){ updateStats(); renderDivProgress(); }
   if(p==="task"){ renderTasks(); }
-  if(p==="setup"){ updateDataInfo(); updateResultInfo(); renderUsers(); loadUsers(false); }
+  if(p==="setup"){ updateDataInfo(); updateResultInfo(); renderUsers(); loadUsers(false);
+    fillDeptOptions();
+    const wd=document.getElementById("whoDesc");
+    if(wd) wd.textContent = (counterName||"—")+" · "+roleLabel(myRole)+(isUnit()?(" · แผนก "+(myDept||"—")):" · เห็นทุกแผนก"); }
   window.scrollTo(0,0);
 }
 let toastTimer=null;
@@ -2214,6 +2512,10 @@ document.getElementById("selName").addEventListener("change",e=>{
 document.getElementById("photoInput").addEventListener("change",e=>{
   handlePhoto(e.target.files && e.target.files[0]);
 });
+["loginPin","loginPin2"].forEach(id=>{
+  const el=document.getElementById(id);
+  if(el) el.addEventListener("keydown",e=>{ if(e.key==="Enter"){ e.preventDefault(); submitLogin(); } });
+});
 document.getElementById("shQR").addEventListener("change",e=>{
   document.getElementById("qrWrap").classList.toggle("on", e.target.checked);
 });
@@ -2234,9 +2536,9 @@ window.addEventListener("offline", ()=>{ setSync("off","ออฟไลน์ ·
   }
   let saved=null;
   try{ saved=JSON.parse(localStorage.getItem(K_ASSETS)||"null"); }catch(e){}
-  // ถ้าเคยเลือกชื่อไว้แล้ว และมีรายการอยู่ -> เข้าแอปเลย
-  if(counterName && saved && saved.length){ ASSETS=saved; enterApp(); return; }
-  // ยังไม่ได้เลือกชื่อ -> แสดงหน้าเลือกชื่อก่อนเสมอ
+  // มี session (เข้าสู่ระบบแล้ว) และมีรายการอยู่ -> เข้าแอปเลย
+  if(session && session.name && saved && saved.length){ ASSETS=saved; enterApp(); return; }
+  // ยังไม่ได้เข้าสู่ระบบ -> แสดงหน้าเลือกชื่อ + ใส่รหัสก่อนเสมอ
   startScreen();
 })();
 </script>

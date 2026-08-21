@@ -1532,6 +1532,13 @@ function refreshSecDropdown(){
 }
 /* นับแล้วจริง (บัญชียืนยัน) — รายการที่หน่วยงานแนบรูปไว้แต่ยังไม่ยืนยัน ไม่ถือว่านับแล้ว */
 function counted(r){ return !!(r && !r.pending); }
+/* รวมชื่อผู้ตรวจนับ: ชื่อเดิม (เช่น หน่วยงานที่แนบรูป) + ชื่อปัจจุบัน คั่นด้วย , (ไม่ซ้ำ) */
+function mergeBy(prevBy, cur){
+  const parts=String(prevBy||"").split(",").map(s=>s.trim()).filter(Boolean);
+  cur=String(cur||"").trim();
+  if(cur && parts.indexOf(cur)<0) parts.push(cur);
+  return parts.join(", ");
+}
 function matchFilter(x){
   if(!inMyScope(x)) return false;   // หน่วยงานเห็นเฉพาะแผนกตัวเอง
   const k=keyOf(x), r=results[k];
@@ -1965,8 +1972,11 @@ function saveCount(){
     if(!confirm("รวมที่นับได้ = "+total+" แต่ใน SAP = "+(x.q||0)+"\n(ผลต่าง "+(total-(x.q||0))+")\n\nยืนยันบันทึกตามนี้?")) return;
   }
   const qrFlag = document.getElementById("shQR").checked ? 1 : 0;
+  // ถ้ารายการนี้หน่วยงานแนบรูปไว้ (รอตรวจสอบ) -> เก็บชื่อหน่วยงาน + ชื่อบัญชี คั่นด้วย ,
+  const prevRec=results[editingKey];
+  const byVal=(prevRec && prevRec.pending) ? mergeBy(prevRec.by, counterName) : counterName;
   const rec={ q:q, qty:total, note:note, qr:qrFlag, photo:photoUrlCur,
-              at:new Date().toISOString(), by:counterName };
+              at:new Date().toISOString(), by:byVal };
   if(!webAppUrl){ toast("ยังไม่ได้ตั้งค่าศูนย์กลาง"); showPage('setup'); return; }
   if(versionOK===false){
     alert("⛔ บันทึกไม่ได้ — เวอร์ชันไม่ตรงกัน\n\n"

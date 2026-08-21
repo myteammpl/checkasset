@@ -189,6 +189,9 @@
   .pbtn{display:block;text-align:center;padding:13px;border:1.5px dashed var(--field);
     border-radius:10px;color:var(--field-dark);font-size:15px;font-weight:700;cursor:pointer;background:var(--field-soft)}
   .pbtn:active{background:#dceade}
+  .pbtn-row{display:flex;gap:8px}
+  .pbtn-row .pbtn{flex:1;padding:13px 8px;font-size:14px}
+  .pbtn.alt{border-style:solid;background:#eef2f5;border-color:#bcd0dd;color:var(--blue)}
   .ppreview img{width:100%;max-height:230px;object-fit:cover;border-radius:10px;display:block;border:1px solid var(--line)}
   .pacts{display:flex;gap:10px;align-items:center;margin-top:8px}
   .plink{font-size:13px;font-weight:700;color:var(--blue);text-decoration:none}
@@ -828,8 +831,12 @@
       <span class="phint" id="pHint">ยังไม่มีรูป</span>
     </div>
     <div class="pbody" id="pBody">
-      <label class="pbtn" id="photoBtnLabel" for="photoInput">📷 ถ่ายรูป / เลือกจากคลังภาพ</label>
-      <input id="photoInput" type="file" accept="image/*" class="hide">
+      <div class="pbtn-row">
+        <label class="pbtn" for="photoInput">📷 ถ่ายรูป</label>
+        <label class="pbtn alt" for="photoInputGallery">🖼️ เลือกจากคลังภาพ</label>
+      </div>
+      <input id="photoInput" type="file" accept="image/*" capture="environment" class="hide">
+      <input id="photoInputGallery" type="file" accept="image/*" class="hide">
     </div>
     <div class="ppreview hide" id="pPreview">
       <img id="pImg" alt="รูปตรวจนับ">
@@ -1700,6 +1707,7 @@ function openSheet(k){
   recalcSum();
   photoData=null; photoUrlCur=(r && r.photo) ? r.photo : "";
   document.getElementById("photoInput").value="";
+  { const g=document.getElementById("photoInputGallery"); if(g) g.value=""; }
   setPhotoUI();
   const qrEl=document.getElementById("shQR");
   qrEl.checked = !!(r && r.qr);
@@ -1876,6 +1884,7 @@ function clearPhoto(){
   photoData=null;
   if(photoUrlCur && !confirm("ลบรูปนี้ออกจากรายการ?\n(รูปเดิมใน Drive จะถูกแทนที่เมื่อถ่ายใหม่)")){ setPhotoUI(); return; }
   photoUrlCur=""; document.getElementById("photoInput").value="";
+  { const g=document.getElementById("photoInputGallery"); if(g) g.value=""; }
   setPhotoUI(); toast("ลบรูปแล้ว (กดบันทึกเพื่อยืนยัน)");
 }
 function handlePhoto(file){
@@ -2771,13 +2780,20 @@ document.getElementById("selName").addEventListener("change",e=>{
   updateWhoUI(); render();
   if(counterName) toast("ผู้ตรวจนับ: "+counterName);
 });
+/* ปุ่ม "ถ่ายรูป" (มี capture = เปิดกล้อง) และ "เลือกจากคลังภาพ" (ไม่มี capture = เลือกไฟล์/แกลเลอรี) */
 document.getElementById("photoInput").addEventListener("change",e=>{
   handlePhoto(e.target.files && e.target.files[0]);
 });
-/* ไม่ใส่ capture -> มือถือขึ้นเมนูให้เลือก "ถ่ายรูป" หรือ "เลือกจากคลังภาพ" · คอมเปิดหน้าต่างเลือกไฟล์ปกติ */
+document.getElementById("photoInputGallery").addEventListener("change",e=>{
+  handlePhoto(e.target.files && e.target.files[0]);
+});
+/* คอมพิวเตอร์: ปุ่มถ่ายรูปก็ให้เลือกไฟล์ได้ (ไม่มีกล้อง) -> ถอด capture ออกเฉพาะเครื่องที่ไม่ใช่สัมผัส */
 (function setupCameraMode(){
-  const inp=document.getElementById("photoInput");
-  if(inp) inp.removeAttribute("capture");
+  let coarse=false;
+  try{ coarse = window.matchMedia && window.matchMedia("(pointer:coarse)").matches; }catch(e){}
+  const ua=navigator.userAgent||"";
+  const isMobile = coarse || /Android|iPhone|iPad|iPod|Mobile|Windows Phone/i.test(ua) || (navigator.maxTouchPoints>1 && /Mac/i.test(ua));
+  if(!isMobile){ const inp=document.getElementById("photoInput"); if(inp) inp.removeAttribute("capture"); }
 })();
 ["loginPin","loginPin2"].forEach(id=>{
   const el=document.getElementById(id);

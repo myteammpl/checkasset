@@ -257,10 +257,33 @@
 
   .page{padding:16px}
   .page h2{font-size:20px; margin:0 0 14px}
-  .sumgrid{display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:16px}
-  .sumcard{background:#fff; border:1px solid var(--line); border-radius:14px; padding:14px; box-shadow:var(--shadow)}
-  .sumcard .k{font-size:12px; color:var(--grey); font-weight:600}
-  .sumcard .v{font-size:26px; font-weight:800; margin-top:2px}
+  .sumgrid{display:grid; grid-template-columns:1fr 1fr 1fr; gap:9px; margin-bottom:16px}
+  .sumcard{background:#fff; border:1px solid var(--line); border-radius:14px; padding:12px; box-shadow:var(--shadow);
+    cursor:pointer; transition:.12s; -webkit-tap-highlight-color:transparent}
+  .sumcard:active{transform:scale(.98)}
+  .sumcard.on{border-color:var(--field); box-shadow:0 0 0 2px var(--field-soft); background:var(--field-soft)}
+  .sumcard .k{font-size:11.5px; color:var(--grey); font-weight:700; line-height:1.3}
+  .sumcard .v{font-size:24px; font-weight:800; margin-top:3px}
+  /* บล็อกเลือกด้าน/แผนก บนหน้าสรุป */
+  .sumfilter{margin-bottom:14px}
+  .sumfilter-row{display:flex; gap:8px}
+  .sumfilter-row select{flex:1; padding:11px 12px; border:1.5px solid var(--line); border-radius:11px;
+    font-size:14px; font-family:inherit; background:#fff; min-width:0}
+  .sumfilter-scope{margin-top:8px; font-size:12.5px; font-weight:700; color:var(--field-dark);
+    background:var(--field-soft); border:1px solid #bfe0cc; border-radius:9px; padding:6px 11px}
+  /* ตารางรายการบนหน้าสรุป */
+  .sumtable-wrap{overflow-x:auto; border:1px solid var(--line); border-radius:12px; margin-bottom:10px; box-shadow:var(--shadow)}
+  table.sumt{border-collapse:collapse; width:100%; font-size:12.5px; background:#fff; min-width:560px}
+  table.sumt th{background:#2c5a40; color:#fff; font-weight:700; padding:9px 8px; text-align:left; white-space:nowrap; position:sticky; top:0}
+  table.sumt td{padding:8px; border-top:1px solid #eee; vertical-align:middle}
+  table.sumt td.num{text-align:right; white-space:nowrap; font-variant-numeric:tabular-nums}
+  table.sumt tr:nth-child(even) td{background:#faf9f5}
+  table.sumt .code{font-weight:800; color:var(--field-dark); cursor:pointer; white-space:nowrap}
+  table.sumt .plink{display:inline-block; text-decoration:none; background:#e7f0ff; color:#1a56c4;
+    border-radius:7px; padding:2px 8px; font-weight:700; font-size:12px}
+  table.sumt .bvhi{color:#9a6a12; font-weight:800}
+  .sumt-empty{padding:22px; text-align:center; color:var(--grey); font-size:13px; background:#fff}
+  .sumt-more{padding:8px; text-align:center; color:var(--grey); font-size:11.5px; background:#faf9f5}
   .divrow{background:#fff; border:1px solid var(--line); border-radius:12px; padding:12px 14px; margin-bottom:8px; box-shadow:var(--shadow)}
   .divrow .top{display:flex; justify-content:space-between; align-items:center; font-size:14px; font-weight:700}
   .divrow .top small{font-weight:500; color:var(--grey)}
@@ -670,26 +693,33 @@
 
 <div id="pageSummary" class="page hide">
   <h2>สรุปผลตรวจนับ</h2>
+
+  <!-- บล็อกเลือกด้าน / แผนก -->
+  <div class="sumfilter">
+    <div class="sumfilter-row">
+      <select id="sumDiv" onchange="onSumDivChange()"><option value="">ทุกด้าน</option></select>
+      <select id="sumSec" onchange="onSumSecChange()"><option value="">ทุกแผนก</option></select>
+    </div>
+    <div class="sumfilter-scope" id="sumScopeText">ทุกด้าน · ทุกแผนก</div>
+  </div>
+
   <div class="warnbox" id="unmapWarn"></div>
-  <div class="sumgrid">
-    <div class="sumcard"><div class="k">นับแล้ว</div><div class="v" id="sumCounted" style="color:var(--field-dark)">0</div></div>
-    <div class="sumcard"><div class="k">ยังไม่นับ</div><div class="v" id="sumTodo" style="color:var(--grey)">0</div></div>
-    <div class="sumcard"><div class="k">มีประเด็น (รอตรวจ)</div><div class="v" id="sumIssue" style="color:var(--amber)">0</div></div>
-    <div class="sumcard"><div class="k">สูญหาย</div><div class="v" id="sumLost" style="color:var(--red)">0</div></div>
-    <div class="sumcard" onclick="jumpPending()" style="cursor:pointer;grid-column:1 / -1;background:#f6faff">
-      <div class="k">📷 มีรูปแนบ รอบัญชีตรวจสอบ (แตะเพื่อดูรายการ)</div>
-      <div class="v" id="sumPending" style="color:#1a56c4">0</div></div>
-    <div class="sumcard" onclick="jumpQR()" style="cursor:pointer;grid-column:1 / -1">
-      <div class="k">🏷️ ต้องปริ้น QR ติดเพิ่ม (แตะเพื่อดูรายการ)</div>
-      <div class="v" id="sumQR" style="color:var(--blue)">0</div></div>
-  </div>
+
+  <!-- การ์ดสถานะ (แตะเพื่อกรองตาราง + ดาวน์โหลด) -->
+  <div class="sumgrid" id="sumGrid"></div>
+
   <div class="exportbar">
-    <button onclick="refreshAll(true)">🔄 อัปเดตข้อมูลล่าสุด</button>
-    <button class="ghost" onclick="exportCSV()">⬇︎ ดาวน์โหลด</button>
+    <button onclick="printReport()">🖨️ พิมพ์ / บันทึก PDF (A4 แนวนอน)</button>
+    <button class="ghost" onclick="downloadReport()">⬇︎ ดาวน์โหลดไฟล์พิมพ์ได้</button>
   </div>
-  <h2 style="font-size:16px">ความคืบหน้าตามด้าน</h2>
-  <div id="divProgress"></div>
-  <div class="mini">ผลนับเก็บในเครื่องนี้อัตโนมัติ และส่งเข้า Google Sheet กลางเมื่อมีเน็ต</div>
+  <div class="exportbar" style="margin-top:-12px">
+    <button class="ghost" onclick="refreshAll(true)">🔄 อัปเดตข้อมูล</button>
+    <button class="ghost" onclick="exportSummary()">⬇︎ CSV (ข้อมูลดิบ)</button>
+  </div>
+
+  <h2 style="font-size:16px" id="sumTableTitle">รายการทั้งหมด</h2>
+  <div class="sumtable-wrap"><div id="sumTable"></div></div>
+  <div class="mini">แตะการ์ดเพื่อกรอง · แตะรหัสเพื่อเปิดรายการ · 📷 = เปิดดูรูปที่แนบ · ปุ่มพิมพ์/ดาวน์โหลดจะได้ตามที่กรองไว้</div>
 </div>
 
 
@@ -1235,9 +1265,7 @@ function changeCounter(){
 /* ปรับ UI ตามบทบาท: หน่วยงานเห็นเฉพาะแผนกตัวเอง + ซ่อนแดชบอร์ด/สรุปรวม */
 function applyRoleUI(){
   const isU=isUnit();
-  const nd=document.getElementById("navDash"), ns=document.getElementById("navSummary");
-  if(nd) nd.style.display=isU?"none":"";
-  if(ns) ns.style.display=isU?"none":"";
+  // หน่วยงานเห็นแดชบอร์ด/สรุปได้ (จำกัดเฉพาะแผนกตัวเองอัตโนมัติ)
   const sf=document.querySelector("#pageCount .subfilter");
   if(sf) sf.style.display=isU?"none":"";
   let us=document.getElementById("unitScope");
@@ -1960,6 +1988,7 @@ function saveToCloud(x, rec){
   closeSheet();
   render(); updateStats();
   if(!document.getElementById("pageDash").classList.contains("hide")) renderDash();
+    if(!document.getElementById("pageSummary").classList.contains("hide")) renderSummary();
 
   setSync("on", photoForQueue ? "บันทึกในเครื่องแล้ว · กำลังซิงค์ผลนับและรูป" : "บันทึกในเครื่องแล้ว · กำลังซิงค์ศูนย์กลาง");
   toast(rec.pending ? "📷 ส่งรูปให้บัญชีตรวจสอบแล้ว · รอยืนยันผล"
@@ -2134,7 +2163,7 @@ function renderDash(){
   document.getElementById("dashSecLevel").classList.add("hide");
 
   // ภาพรวมทั้งหมด
-  const all=statsFor(ASSETS);
+  const all=statsFor(visibleAssets());
   document.getElementById("dashOverall").innerHTML =
      '<div class="lbl">ความคืบหน้ารวมทั้งบริษัท</div>'
     +'<div class="big">'+all.pct+'%</div>'
@@ -2152,7 +2181,7 @@ function renderDash(){
 
   // การ์ดรายด้าน
   const map={};
-  for(const x of ASSETS){ const d=x.div||"(ไม่ระบุด้าน)"; (map[d]=map[d]||[]).push(x); }
+  for(const x of visibleAssets()){ const d=x.div||"(ไม่ระบุด้าน)"; (map[d]=map[d]||[]).push(x); }
   const box=document.getElementById("dashDivList"); box.innerHTML="";
   Object.keys(map).sort((a,b)=>map[b].length-map[a].length).forEach(d=>{
     const s=statsFor(map[d]);
@@ -2174,7 +2203,7 @@ function renderDashSections(){
   document.getElementById("dashDivLevel").classList.add("hide");
   document.getElementById("dashSecLevel").classList.remove("hide");
 
-  const inDiv=ASSETS.filter(x=>(x.div||"(ไม่ระบุด้าน)")===dashDiv);
+  const inDiv=visibleAssets().filter(x=>(x.div||"(ไม่ระบุด้าน)")===dashDiv);
   const s=statsFor(inDiv);
   document.getElementById("dashDivHead").innerHTML =
      '<div class="lbl">'+esc(dashDiv)+'</div>'
@@ -2285,6 +2314,7 @@ async function pullRemote(manual){
     results=fresh;
     persist(); render(); updateStats();
     if(!document.getElementById("pageDash").classList.contains("hide")) renderDash();
+    if(!document.getElementById("pageSummary").classList.contains("hide")) renderSummary();
     lastPullAt=new Date();
     setSync("on","ตรงกับศูนย์กลาง · อัปเดต "+lastPullAt.toLocaleTimeString("th-TH"));
     updateResultInfo();
@@ -2343,14 +2373,7 @@ function updateStats(){
       sb.style.background=(curDiv||curSec)?"rgba(143,214,166,.32)":"rgba(255,255,255,.16)";
     }
   }
-  // ---- หน้าสรุปผล: ภาพรวมทั้งหมดเสมอ ----
-  const all=calcStats(ASSETS);
-  document.getElementById("sumCounted").textContent=all.counted.toLocaleString();
-  document.getElementById("sumTodo").textContent=all.remain.toLocaleString();
-  document.getElementById("sumIssue").textContent=all.issue.toLocaleString();
-  document.getElementById("sumLost").textContent=all.lost.toLocaleString();
-  const pEl=document.getElementById("sumPending"); if(pEl) pEl.textContent=(all.pending||0).toLocaleString();
-  const qEl=document.getElementById("sumQR"); if(qEl) qEl.textContent=all.qrn.toLocaleString();
+  // หน้าสรุปผลมี renderSummary() จัดการเอง (ไม่อ้างอิง id เดิมแล้ว)
 }
 function jumpPending(){
   curFilter="pending";
@@ -2358,6 +2381,245 @@ function jumpPending(){
   document.querySelectorAll("#issueChips .chip").forEach(c=>c.classList.remove("on"));
   showPage('count'); render();
   toast("แสดงเฉพาะรายการมีรูปแนบ รอบัญชีตรวจสอบ");
+}
+
+/* ============ หน้าสรุปผล (v18.1) ============ */
+let sumDivF="", sumSecF="", sumStatusF="";   // ตัวกรองเฉพาะหน้าสรุป
+const SUM_CARDS=[
+  {key:"counted",label:"นับแล้ว",color:"var(--field-dark)"},
+  {key:"todo",label:"ยังไม่นับ",color:"var(--grey)"},
+  {key:"s1",label:"ใช้งาน",color:"#3f7d5a"},
+  {key:"s2",label:"เลิกใช้งาน",color:"#8a6d3b"},
+  {key:"s3",label:"โอนย้าย",color:"#2c6e9b"},
+  {key:"s4",label:"ชำรุด/รอตัด",color:"var(--amber)"},
+  {key:"s6",label:"สูญหาย",color:"var(--red)"},
+  {key:"pending",label:"📷 มีรูปรอตรวจสอบ",color:"#1a56c4"},
+  {key:"qr",label:"🏷️ ต้องปริ้น QR",color:"var(--blue)"}
+];
+function visibleAssets(){ return ASSETS.filter(inMyScope); }
+function sumScopeAssets(){
+  return visibleAssets().filter(x=>{
+    if(sumDivF){ const d=x.div||"(ไม่ระบุด้าน)"; if(d!==sumDivF) return false; }
+    if(sumSecF && x.sec!==sumSecF) return false;
+    return true;
+  });
+}
+function matchSumStatus(x,key){
+  const r=results[keyOf(x)];
+  if(key==="counted") return counted(r);
+  if(key==="todo") return !r;
+  if(key==="pending") return !!(r&&r.pending);
+  if(key==="qr") return !!(counted(r)&&r.qr);
+  if(key.charAt(0)==="s"){ const id=Number(key.slice(1)); return !!(counted(r)&&Number((r.q||{})[id]||0)>0); }
+  return true;
+}
+function sumFiltered(){
+  const list=sumScopeAssets();
+  if(!sumStatusF) return list;
+  return list.filter(x=>matchSumStatus(x,sumStatusF));
+}
+function fillSumFilters(){
+  const vis=visibleAssets();
+  const divSel=document.getElementById("sumDiv"), secSel=document.getElementById("sumSec");
+  if(!divSel||!secSel) return;
+  const divs=[...new Set(vis.map(x=>x.div||"(ไม่ระบุด้าน)"))].sort((a,b)=>a.localeCompare(b,'th'));
+  divSel.innerHTML='<option value="">ทุกด้าน</option>'+divs.map(d=>'<option value="'+esc(d)+'">'+esc(d)+'</option>').join("");
+  divSel.value=sumDivF;
+  const secPool=vis.filter(x=>!sumDivF || (x.div||"(ไม่ระบุด้าน)")===sumDivF);
+  const secs=[...new Set(secPool.map(x=>x.sec).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'th'));
+  secSel.innerHTML='<option value="">ทุกแผนก</option>'+secs.map(s=>'<option value="'+esc(s)+'">'+esc(s)+'</option>').join("");
+  secSel.value=sumSecF;
+}
+function onSumDivChange(){
+  sumDivF=document.getElementById("sumDiv").value; sumSecF="";
+  renderSummary();
+}
+function onSumSecChange(){
+  sumSecF=document.getElementById("sumSec").value;
+  renderSummary();
+}
+function setSumStatus(key){
+  sumStatusF = (sumStatusF===key) ? "" : key;   // แตะซ้ำ = ยกเลิก
+  renderSummary();
+}
+function renderSummary(){
+  fillSumFilters();
+  const scope=sumScopeAssets();
+  // นับจำนวนแต่ละการ์ด
+  const cnt={}; SUM_CARDS.forEach(c=>cnt[c.key]=0);
+  let unmapped=0;
+  for(const x of scope){
+    if((x.div||"")==="" ) unmapped++;
+    SUM_CARDS.forEach(c=>{ if(matchSumStatus(x,c.key)) cnt[c.key]++; });
+  }
+  // การ์ด
+  const grid=document.getElementById("sumGrid");
+  grid.innerHTML=SUM_CARDS.map(c=>
+    '<div class="sumcard'+(sumStatusF===c.key?" on":"")+'" onclick="setSumStatus(\''+c.key+'\')">'
+    +'<div class="k">'+esc(c.label)+'</div>'
+    +'<div class="v" style="color:'+c.color+'">'+cnt[c.key].toLocaleString()+'</div></div>').join("");
+  // ป้ายขอบเขต
+  const st=document.getElementById("sumScopeText");
+  if(st) st.textContent=(sumDivF||"ทุกด้าน")+" · "+(sumSecF||"ทุกแผนก")
+      +(sumStatusF?(" · เฉพาะ "+(SUM_CARDS.find(c=>c.key===sumStatusF)||{}).label):"")
+      +" · "+scope.length.toLocaleString()+" รายการ";
+  // เตือนไม่ระบุด้าน
+  const w=document.getElementById("unmapWarn");
+  if(w){ if(unmapped>0){ w.innerHTML='⚠️ มี <b>'+unmapped.toLocaleString()+'</b> รายการยังไม่ระบุด้าน — นับได้ปกติ'; w.classList.remove("hide"); w.style.display=""; }
+    else { w.classList.add("hide"); w.style.display="none"; } }
+  renderSumTable();
+}
+const SUM_TABLE_MAX=400;
+function renderSumTable(){
+  const box=document.getElementById("sumTable"); if(!box) return;
+  const list=sumFiltered();
+  const title=document.getElementById("sumTableTitle");
+  if(title) title.textContent="รายการ ("+list.length.toLocaleString()+")"
+      +(sumStatusF?(" · "+(SUM_CARDS.find(c=>c.key===sumStatusF)||{}).label):"");
+  if(!list.length){ box.innerHTML='<div class="sumt-empty">ไม่มีรายการตามที่กรอง</div>'; return; }
+  let h='<table class="sumt"><thead><tr>'
+    +'<th>รหัส</th><th>ชื่อสินทรัพย์</th><th>อายุ</th>'
+    +'<th style="text-align:right">ราคาทุน</th><th style="text-align:right">SAP</th>'
+    +'<th style="text-align:right">BV</th><th>รูป</th></tr></thead><tbody>';
+  for(const x of list.slice(0,SUM_TABLE_MAX)){
+    const r=results[keyOf(x)];
+    const bv=Number(x.bv)||0;
+    const photo=(r&&r.photo)?('<a class="plink" href="'+driveView(r.photo)+'" target="_blank" rel="noopener" onclick="event.stopPropagation()">📷 ดู</a>'):'<span style="color:#ccc">—</span>';
+    h+='<tr>'
+      +'<td class="code" onclick="openSheet(\''+keyOf(x).replace(/'/g,"\\'")+'\')">'+esc(x.a)+'</td>'
+      +'<td>'+esc(x.d||"—")+'</td>'
+      +'<td>'+(String(x.ul||"").trim()||"—")+'</td>'
+      +'<td class="num">'+money(x.av||0)+'</td>'
+      +'<td class="num">'+(Number(x.q)||0).toLocaleString()+'</td>'
+      +'<td class="num'+(bv>0?" bvhi":"")+'">'+money(bv)+'</td>'
+      +'<td>'+photo+'</td></tr>';
+  }
+  h+='</tbody></table>';
+  if(list.length>SUM_TABLE_MAX) h+='<div class="sumt-more">แสดง '+SUM_TABLE_MAX+' รายการแรก จาก '+list.length.toLocaleString()+' — ใช้ตัวกรองด้าน/แผนก/การ์ด เพื่อแคบผล (ดาวน์โหลดได้ครบทุกรายการ)</div>';
+  box.innerHTML=h;
+}
+/* ดาวน์โหลดตามที่กรองบนหน้าสรุป */
+function exportSummary(){
+  const list=sumFiltered();
+  if(!list.length){ toast("ไม่มีรายการตามที่กรอง"); return; }
+  const head=["No.","รหัส (Asset)","Sub","ชื่อสินทรัพย์","ด้าน","แผนก","Cost Center","Serial number",
+    "อายุการใช้งาน","ราคาทุน (Acquis.val.)","จำนวน SAP","มูลค่าคงเหลือ (BV)",
+    "สถานะการนับ","ใช้งาน","เลิกใช้งาน","โอนย้าย","ชำรุด/รอตัด","ติดประเด็น","สูญหาย",
+    "จำนวนตรวจนับ","ผลต่าง","หมายเหตุ","ต้องปริ้น QR","ลิงก์รูปภาพ","ผู้นับ","เวลาที่นับ"];
+  const rows=[head];
+  let i=0;
+  for(const x of list){ i++;
+    const r=results[keyOf(x)]; const q=(r&&r.q)||{};
+    let statusTxt="ยังไม่นับ";
+    if(r&&r.pending) statusTxt="มีรูปรอตรวจสอบ";
+    else if(counted(r)) statusTxt="นับแล้ว";
+    const diff = counted(r) ? ((r.qty||0)-(x.q||0)) : "";
+    rows.push([i,x.a,x.sub||"0",x.d||"",x.div||"",x.sec||"",x.cc||"",x.sn||"",
+      x.ul||"",(x.av||0),(x.q||0),(x.bv||0),
+      statusTxt,q[1]||"",q[2]||"",q[3]||"",q[4]||"",q[5]||"",q[6]||"",
+      counted(r)?(r.qty||0):"",diff,(r&&r.note||"").replace(/\n/g," "),
+      (counted(r)&&r.qr)?"ต้องติด":"",(r&&r.photo||""),(r&&r.by||""),(r&&r.at)?new Date(r.at).toLocaleString("th-TH"):""]);
+  }
+  const csv="\ufeff"+rows.map(row=>row.map(c=>{ const s=c==null?"":String(c);
+    return /[",\n]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s; }).join(",")).join("\n");
+  const blob=new Blob([csv],{type:"text/csv;charset=utf-8"}); const url=URL.createObjectURL(blob);
+  const a=document.createElement("a"); const dt=new Date().toISOString().slice(0,10);
+  const tag=(sumDivF||"ทุกด้าน")+(sumSecF?("_"+sumSecF):"")+(sumStatusF?("_"+(SUM_CARDS.find(c=>c.key===sumStatusF)||{}).label):"");
+  a.href=url; a.download="สรุปตรวจนับ_"+tag+"_"+dt+".csv";
+  document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+  toast("ดาวน์โหลดแล้ว "+i.toLocaleString()+" รายการ ✓");
+}
+
+/* ===== รายงานพิมพ์ได้ A4 แนวนอน ตีเส้น + แถว Total ===== */
+function buildReportHTML(){
+  const list=sumFiltered();
+  const dt=new Date().toLocaleString("th-TH",{dateStyle:"long",timeStyle:"short"});
+  const statusLabel = sumStatusF ? (SUM_CARDS.find(c=>c.key===sumStatusF)||{}).label : "ทุกสถานะ";
+  // ยอดรวมแต่ละสถานะ + มูลค่า
+  const tot={av:0,bv:0,sap:0,s1:0,s2:0,s3:0,s4:0,s6:0,cnt:0};
+  let bodyRows="";
+  list.forEach((x,idx)=>{
+    const r=results[keyOf(x)]; const q=(r&&r.q)||{};
+    const av=Number(x.av)||0, bv=Number(x.bv)||0, sap=Number(x.q)||0;
+    const s1=Number(q[1]||0),s2=Number(q[2]||0),s3=Number(q[3]||0),s4=Number(q[4]||0),s6=Number(q[6]||0);
+    const cntQ = counted(r) ? (Number(r.qty)||0) : 0;
+    tot.av+=av; tot.bv+=bv; tot.sap+=sap; tot.s1+=s1; tot.s2+=s2; tot.s3+=s3; tot.s4+=s4; tot.s6+=s6; tot.cnt+=cntQ;
+    const stTxt = (r&&r.pending)?"รอตรวจสอบ":(counted(r)?"นับแล้ว":"ยังไม่นับ");
+    const cell=(v)=> v? String(v):"";
+    bodyRows += "<tr>"
+      +"<td class='c'>"+(idx+1)+"</td>"
+      +"<td class='code'>"+esc(x.a)+"</td>"
+      +"<td class='name'>"+esc(x.d||"—")+"</td>"
+      +"<td class='c'>"+esc(String(x.ul||"").trim()||"—")+"</td>"
+      +"<td class='n'>"+moneyR(av)+"</td>"
+      +"<td class='n'>"+sap.toLocaleString()+"</td>"
+      +"<td class='n"+(bv>0?" hi":"")+"'>"+moneyR(bv)+"</td>"
+      +"<td class='c'>"+cell(s1)+"</td><td class='c'>"+cell(s2)+"</td><td class='c'>"+cell(s3)+"</td>"
+      +"<td class='c'>"+cell(s4)+"</td><td class='c'>"+cell(s6)+"</td>"
+      +"<td class='c st'>"+stTxt+"</td>"
+      +"<td class='note'>"+esc((r&&r.note||"").replace(/\n/g," "))+"</td>"
+      +"</tr>";
+  });
+  const totalRow = "<tr class='total'>"
+    +"<td class='c' colspan='4'>รวม (Total) — "+list.length.toLocaleString()+" รายการ</td>"
+    +"<td class='n'>"+moneyR(tot.av)+"</td>"
+    +"<td class='n'>"+tot.sap.toLocaleString()+"</td>"
+    +"<td class='n'>"+moneyR(tot.bv)+"</td>"
+    +"<td class='c'>"+tot.s1.toLocaleString()+"</td><td class='c'>"+tot.s2.toLocaleString()+"</td>"
+    +"<td class='c'>"+tot.s3.toLocaleString()+"</td><td class='c'>"+tot.s4.toLocaleString()+"</td>"
+    +"<td class='c'>"+tot.s6.toLocaleString()+"</td>"
+    +"<td class='c'></td><td class='note'></td></tr>";
+  return '<!doctype html><html lang="th"><head><meta charset="utf-8">'
+    +'<title>รายงานตรวจนับสินทรัพย์ถาวร</title><style>'
+    +'@page{size:A4 landscape;margin:9mm}'
+    +'*{box-sizing:border-box} body{font-family:"TH Sarabun New","Sarabun","Tahoma",sans-serif;margin:0;color:#1a1a1a}'
+    +'.rp-title{font-size:22pt;font-weight:800;text-align:center;margin:0 0 2px}'
+    +'.rp-sub{font-size:12pt;font-weight:700;text-align:center;margin:0 0 2px}'
+    +'.rp-meta{font-size:9.5pt;color:#444;text-align:center;margin:0 0 8px}'
+    +'table{border-collapse:collapse;width:100%;table-layout:auto}'
+    +'th,td{border:1px solid #555;padding:3px 5px;font-size:9pt;line-height:1.25}'
+    +'th{background:#2c5a40;color:#fff;font-weight:700;text-align:center}'
+    +'td.c{text-align:center;white-space:nowrap} td.n{text-align:right;white-space:nowrap}'
+    +'td.code{font-weight:700;white-space:nowrap} td.name{min-width:150px} td.note{min-width:90px;color:#333}'
+    +'td.hi{color:#9a6a12;font-weight:700} td.st{font-size:8.5pt}'
+    +'tbody tr:nth-child(even) td{background:#f4f7f4}'
+    +'tr.total td{background:#ffe9a8;font-weight:800;font-size:9.5pt;border-top:2px solid #333}'
+    +'thead{display:table-header-group}'
+    +'@media print{ .noprint{display:none} }'
+    +'.noprint{text-align:center;margin:10px}'
+    +'.noprint button{font-size:14px;font-weight:700;padding:9px 18px;margin:0 5px;border:none;border-radius:8px;background:#2c5a40;color:#fff;cursor:pointer}'
+    +'</style></head><body>'
+    +'<div class="noprint"><button onclick="window.print()">🖨️ พิมพ์ / บันทึก PDF</button></div>'
+    +'<div class="rp-title">รายงานตรวจนับสินทรัพย์ถาวร</div>'
+    +'<div class="rp-sub">ด้าน: '+esc(sumDivF||"ทุกด้าน")+' &nbsp;&nbsp; แผนก: '+esc(sumSecF||"ทุกแผนก")+' &nbsp;&nbsp; สถานะ: '+esc(statusLabel)+'</div>'
+    +'<div class="rp-meta">จำนวน '+list.length.toLocaleString()+' รายการ · พิมพ์เมื่อ '+esc(dt)+' · โดย '+esc(counterName||"-")+'</div>'
+    +'<table><thead><tr>'
+    +'<th>No.</th><th>รหัส</th><th>ชื่อสินทรัพย์</th><th>อายุ</th><th>ราคาทุน</th><th>SAP</th><th>BV</th>'
+    +'<th>ใช้งาน</th><th>เลิกใช้</th><th>โอนย้าย</th><th>ชำรุด</th><th>สูญหาย</th><th>สถานะ</th><th>หมายเหตุ</th>'
+    +'</tr></thead><tbody>'+bodyRows+totalRow+'</tbody></table>'
+    +'</body></html>';
+}
+/* ตัวเลขในรายงาน: มีคอมมา ไม่มีจุดถ้าเป็นจำนวนเต็ม */
+function moneyR(n){ n=Number(n)||0; return n.toLocaleString("th-TH",{maximumFractionDigits:2}); }
+function printReport(){
+  const list=sumFiltered();
+  if(!list.length){ toast("ไม่มีรายการตามที่กรอง"); return; }
+  const w=window.open("","_blank");
+  if(!w){ toast("เบราว์เซอร์บล็อกป๊อปอัป — อนุญาตป๊อปอัปแล้วลองใหม่ หรือใช้ปุ่มดาวน์โหลด"); return; }
+  w.document.open(); w.document.write(buildReportHTML()); w.document.close();
+  w.focus();
+  setTimeout(()=>{ try{ w.print(); }catch(e){} }, 500);
+}
+function downloadReport(){
+  const list=sumFiltered();
+  if(!list.length){ toast("ไม่มีรายการตามที่กรอง"); return; }
+  const blob=new Blob([buildReportHTML()],{type:"text/html;charset=utf-8"});
+  const url=URL.createObjectURL(blob); const a=document.createElement("a");
+  const dt=new Date().toISOString().slice(0,10);
+  const tag=(sumDivF||"ทุกด้าน")+(sumSecF?("_"+sumSecF):"")+(sumStatusF?("_"+(SUM_CARDS.find(c=>c.key===sumStatusF)||{}).label):"");
+  a.href=url; a.download="รายงานตรวจนับ_"+tag+"_"+dt+".html";
+  document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+  toast("ดาวน์โหลดไฟล์รายงานแล้ว ✓ เปิดไฟล์แล้วสั่งพิมพ์/บันทึก PDF ได้เลย");
 }
 function jumpQR(){
   curFilter="qr";
@@ -2368,7 +2630,7 @@ function jumpQR(){
 function renderDivProgress(){
   const map={};
   for(const x of ASSETS){ if(!inMyScope(x))continue; const d=x.div||"(ไม่ระบุด้าน)"; if(!map[d])map[d]={t:0,c:0}; map[d].t++; if(counted(results[keyOf(x)]))map[d].c++; }
-  const box=document.getElementById("divProgress"); box.innerHTML="";
+  const box=document.getElementById("divProgress"); if(!box) return; box.innerHTML="";
   Object.keys(map).sort((a,b)=>map[b].t-map[a].t).forEach(d=>{
     const {t,c}=map[d]; const pct=t?Math.round(c/t*100):0;
     box.innerHTML+='<div class="divrow"><div class="top"><span>'+esc(d)+'</span>'
@@ -2472,7 +2734,7 @@ function showPage(p){
   document.getElementById("navTask").classList.toggle("on",p==="task");
   document.getElementById("navSetup").classList.toggle("on",p==="setup");
   if(p==="dash"){ renderDash(); }
-  if(p==="summary"){ updateStats(); renderDivProgress(); }
+  if(p==="summary"){ renderSummary(); }
   if(p==="task"){ renderTasks(); }
   if(p==="setup"){ updateDataInfo(); updateResultInfo(); renderUsers(); loadUsers(false);
     fillDeptOptions();

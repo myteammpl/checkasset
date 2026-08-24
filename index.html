@@ -3,6 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<!-- กันเบราว์เซอร์แคชหน้าเก่า (สำคัญเมื่อโฮสต์บน GitHub Pages) -->
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
 <title>ตรวจนับสินทรัพย์ · ศูนย์กลาง</title>
 <style>
   :root{
@@ -754,9 +758,10 @@
   </div>
   <button class="btn-primary" onclick="saveSetup()">บันทึกการตั้งค่า</button>
   <button class="btn-ghost" onclick="testConnection()">ทดสอบการเชื่อมต่อ</button>
+  <button class="btn-ghost" onclick="forceUpdate()" style="margin-top:8px">🔄 อัปเดตแอป / ล้างแคช (โหลดหน้าเว็บใหม่)</button>
   <div id="setupStatus" class="status-line hide" style="margin-top:14px"></div>
   <div class="mini" style="text-align:left;padding:6px 2px 0">
-    เวอร์ชันแอป: <b id="appVer">-</b> · ต้องใช้กับ Code.gs เวอร์ชันเดียวกัน
+    เวอร์ชันแอป: <b id="appVer">-</b> · ถ้าเลขนี้ไม่ตรงกับ Code.gs ให้กด “อัปเดตแอป / ล้างแคช”
   </div>
 
   <div class="step-note" style="margin-top:20px">
@@ -1039,7 +1044,7 @@ let curFilter="all", curDiv="", curSec="", curSearch="", editingKey=null, editin
 
 let bootTimer=null;
 let bootRetrying=false;
-const BOOT_TIMEOUT_MS=8000;
+const BOOT_TIMEOUT_MS=20000;   // Apps Script cold start ช้าได้ 10-15 วิ — เผื่อไว้ 20 วิ
 
 function showBootLoading(title, text, sub){
   const el=document.getElementById("bootLoading");
@@ -1105,58 +1110,73 @@ async function startScreen(isRetry=false){
   box.innerHTML='<div class="nameloading">กำลังโหลดรายชื่อผู้ตรวจนับ...</div>';
   st.classList.add("hide");
 
-  const controller = new AbortController();
-  const timer=setTimeout(()=>controller.abort(), BOOT_TIMEOUT_MS);
-
-  try{
-    const res=await fetch(
-      webAppUrl+(webAppUrl.includes("?")?"&":"?")+"action=users&t="+Date.now(),
-      {signal:controller.signal, cache:"no-store"}
-    );
-    clearTimeout(timer);
-
-    if(!res.ok) throw new Error("HTTP "+res.status);
-    const data=await res.json();
-    if(!(data && Array.isArray(data.users))) throw new Error("no-users");
-
-    USERS=(data.users||[]).map(normUser_);
-    localStorage.setItem("assetcount_2026_users", JSON.stringify(USERS));
-
-    if(!USERS.length){
-      hideBootLoading();
-      box.innerHTML="";
-      st.classList.remove("hide"); st.classList.add("err");
-      st.innerHTML="ยังไม่มีรายชื่อผู้ใช้ในศูนย์กลาง<br>"
-        +"ให้ผู้ดูแลเพิ่มชื่อในชีต \"ผู้ตรวจนับ\" ของ Google Sheet ก่อน";
-      return;
-    }
-
-    hideBootLoading();
-    box.innerHTML = USERS.map(u=>{
+  // ปุ่มรายชื่อ (ใช้ซ้ำทั้งกรณีโหลดสำเร็จ และกรณีใช้แคช)
+  const renderNames=(list)=>{
+    box.innerHTML=list.map(u=>{
       const sub = u.role==="unit" ? ("หน่วยงาน · "+(u.dept||"ยังไม่ระบุแผนก")) : "นักบัญชี · เห็นทุกแผนก";
       return '<button class="namebtn" onclick="openLogin(\''+String(u.name).replace(/'/g,"\\'")+'\')">'
         +'<span class="av">'+esc(String(u.name).trim().charAt(0).toUpperCase())+'</span>'
         +'<span>'+esc(u.name)+'<span class="nb-sub">'+esc(sub)+(u.hasPin?"":" · ตั้งรหัสครั้งแรก")+'</span></span></button>';
     }).join("");
+  };
+  const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 
-  }catch(e){
-    clearTimeout(timer);
-    box.innerHTML="";
-    hideBootLoading();
-
-    st.classList.remove("hide"); st.classList.add("err");
-    if(e && e.name==="AbortError"){
-      st.innerHTML="เชื่อมต่อศูนย์กลางนานเกินไป (เกิน 8 วินาที)<br>"
-        +"ข้อมูลผลตรวจนับเดิมจะไม่ถูกลบ — ลองเชื่อมต่อใหม่ได้";
-    }else{
-      st.innerHTML="เชื่อมต่อศูนย์กลางไม่ได้<br>"
-        +"ตรวจสัญญาณอินเทอร์เน็ต แล้วลองใหม่อีกครั้ง";
+  // ลองเชื่อมต่อสูงสุด 3 ครั้ง (เผื่อ Apps Script cold start ช้า)
+  let users=null;
+  for(let attempt=1; attempt<=3 && users===null; attempt++){
+    if(attempt>1){
+      const sub=document.querySelector("#bootLoading .boot-sub");
+      if(sub) sub.textContent="เชื่อมต่อช้า กำลังลองใหม่ครั้งที่ "+attempt+"…";
+      await sleep(600);
     }
-    // ให้ overlay แสดงสถานะ timeout พร้อมปุ่ม retry
-    showBootTimeout();
-  }finally{
-    bootRetrying=false;
+    const controller=new AbortController();
+    const timer=setTimeout(()=>controller.abort(), BOOT_TIMEOUT_MS);
+    try{
+      const res=await fetch(
+        webAppUrl+(webAppUrl.includes("?")?"&":"?")+"action=users&t="+Date.now(),
+        {signal:controller.signal, cache:"no-store"});
+      clearTimeout(timer);
+      if(!res.ok) throw new Error("HTTP "+res.status);
+      const data=await res.json();
+      if(!(data && Array.isArray(data.users))) throw new Error("no-users");
+      users=data.users.map(normUser_);
+    }catch(e){ clearTimeout(timer); /* ลองใหม่รอบถัดไป */ }
   }
+
+  // สำเร็จ
+  if(users!==null){
+    USERS=users;
+    localStorage.setItem("assetcount_2026_users", JSON.stringify(USERS));
+    hideBootLoading();
+    if(!USERS.length){
+      box.innerHTML="";
+      st.classList.remove("hide"); st.classList.add("err");
+      st.innerHTML="ยังไม่มีรายชื่อผู้ใช้ในศูนย์กลาง<br>ให้ผู้ดูแลเพิ่มชื่อในชีต \"ผู้ตรวจนับ\" ของ Google Sheet ก่อน";
+      return;
+    }
+    renderNames(USERS);
+    bootRetrying=false;
+    return;
+  }
+
+  // ทุกครั้งล้มเหลว -> ใช้รายชื่อที่จำไว้ในเครื่อง (ถ้ามี) จะได้ไม่ค้างหน้าจอ
+  let cached=[];
+  try{ cached=JSON.parse(localStorage.getItem("assetcount_2026_users")||"[]").map(normUser_); }catch(e){}
+  hideBootLoading();
+  if(cached.length){
+    USERS=cached;
+    st.classList.remove("hide"); st.classList.remove("err");
+    st.style.cssText="background:#fdf3e0;border:1px solid #e6cf9a;color:#8a5a00;border-radius:12px;padding:12px 14px;font-size:13px;line-height:1.5";
+    st.innerHTML="⚠️ ศูนย์กลางตอบช้าอยู่ — ใช้รายชื่อที่จำไว้ในเครื่องไปก่อน เข้าสู่ระบบได้ตามปกติ<br>(ถ้าเข้าไม่ได้ ให้รอสักครู่แล้วกด “ลองเชื่อมต่ออีกครั้ง”)";
+    renderNames(cached);
+    showBootTimeout();   // มีปุ่มลองใหม่ให้ด้วย
+  }else{
+    box.innerHTML="";
+    st.classList.remove("hide"); st.classList.add("err");
+    st.innerHTML="เชื่อมต่อศูนย์กลางช้า/ไม่ได้ (ลองแล้ว 3 ครั้ง)<br>ข้อมูลผลตรวจนับเดิมจะไม่ถูกลบ — ตรวจสัญญาณเน็ตแล้วกดลองใหม่";
+    showBootTimeout();
+  }
+  bootRetrying=false;
 }
 
 /* ปรับ record ผู้ใช้ให้เป็นรูปแบบมาตรฐาน (รองรับ string เก่า) */
@@ -1472,8 +1492,21 @@ async function checkVersion(){
     const data=await res.json();
     const ver=String((data&&data.code_version)||"");
     const miss=missingFeatures(data);
-    if(miss.length===0){ versionOK=true; w.classList.add("hide"); return; }
+    if(miss.length===0){
+      versionOK=true;
+      // แคชค้าง? เทียบเวอร์ชันหน้าเว็บกับหลังบ้าน — ถ้าหลังบ้านใหม่กว่า = เครื่องนี้โหลดของเก่ามา
+      const backendV=parseInt(ver,10)||0, appV=parseInt(APP_CODE_VERSION,10)||0;
+      if(backendV>appV){
+        w.classList.remove("hide"); w.style.background="#eaf4ee"; w.style.borderColor="#bfe0cc"; w.style.color="#1f5133";
+        w.innerHTML="🔄 <b>มีแอปเวอร์ชันใหม่ (v"+backendV+")</b> — เครื่องนี้ยังเป็น v"+appV+" (หน้าเว็บเก่าค้างในแคช)<br>"
+          +"<button onclick=\"forceUpdate()\" style=\"margin-top:8px;padding:9px 18px;border:none;border-radius:8px;background:#2c5a40;color:#fff;font-weight:800;cursor:pointer;font-family:inherit\">⬆︎ อัปเดตเป็นเวอร์ชันล่าสุด</button>";
+      } else {
+        w.classList.add("hide");
+      }
+      return;
+    }
     versionOK=false;
+    w.style.background=""; w.style.borderColor=""; w.style.color="";
     w.classList.remove("hide");
     w.innerHTML="⛔ <b>หยุด! อย่าเพิ่งบันทึกผลนับ</b><br>"
       +"ศูนย์กลางที่เชื่อมอยู่ยังไม่รองรับ: <b>"+miss.join(", ")+"</b>"
@@ -1481,6 +1514,13 @@ async function checkVersion(){
       +"แจ้งผู้ดูแลให้วาง Code.gs ตัวใหม่ แล้ว Deploy → Manage deployments "
       +"→ ✏️ → Version: New version → Deploy";
   }catch(e){ /* เชื่อมต่อไม่ได้ ปล่อยให้ระบบเดิมแจ้งเอง */ }
+}
+
+/* บังคับโหลดหน้าเว็บใหม่แบบเลี่ยงแคช (ล้างของเก่าที่ค้าง) — ไม่ลบข้อมูล login/ผลนับในเครื่อง */
+function forceUpdate(){
+  try{ if(window.caches && caches.keys){ caches.keys().then(ks=>ks.forEach(k=>caches.delete(k))); } }catch(e){}
+  const base=location.href.split("?")[0].split("#")[0];
+  location.replace(base+"?v="+Date.now());
 }
 
 function changeName(){

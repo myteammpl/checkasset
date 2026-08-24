@@ -810,6 +810,20 @@
   <div class="mini" style="text-align:left;padding:10px 2px 0">
     เปลี่ยนไฟล์จะล้างรายการสินทรัพย์เดิม แต่<b>ไม่ลบผลนับ</b>ที่ทำไปแล้ว (ผูกตามรหัส Asset)
   </div>
+
+  <div id="backupBox">
+    <div class="step-note" style="margin-top:20px">
+      <b>สำรองข้อมูล / เรียกดูย้อนหลัง (เฉพาะนักบัญชี)</b><br>
+      <span id="backupInfo">—</span>
+    </div>
+    <button class="btn-primary" style="width:100%;margin-bottom:8px" onclick="downloadBackup()">📤 สำรองผลตรวจนับเป็นไฟล์ (.json)</button>
+    <label class="btn-ghost" for="backupFile" style="display:block;text-align:center;cursor:pointer;margin-bottom:6px">📥 เปิดไฟล์สำรองมาดูย้อนหลัง (ดูอย่างเดียว)</label>
+    <input id="backupFile" type="file" accept=".json,application/json" class="hide" onchange="openBackupFile(this)">
+    <div class="mini" style="text-align:left;padding:6px 2px 18px">
+      ไฟล์ .json เก็บผลตรวจนับครบชุด (รวมลิงก์รูป) — เก็บไว้เป็น backup ประจำรอบ · การเปิดดูย้อนหลัง
+      จะเปิดหน้ารายงานแยกต่างหาก <b>ไม่แตะข้อมูลปัจจุบันในระบบ</b> · ระบบไม่ลบผลตรวจนับให้เอง คุณจัดการเองเมื่อพร้อม
+    </div>
+  </div>
 </div>
 
 <div class="sheet-bg" id="sheetBg" onclick="closeSheet()"></div>
@@ -1282,6 +1296,8 @@ function applyRoleUI(){
     if(us){ us.textContent="👁 เห็นเฉพาะแผนก: "+(myDept||"(ยังไม่ระบุแผนก)"); us.style.display=""; }
     curDiv=""; curSec="";
   } else if(us){ us.style.display="none"; }
+  // สำรองข้อมูล/เรียกดูย้อนหลัง = เฉพาะนักบัญชี
+  const bb=document.getElementById("backupBox"); if(bb) bb.style.display=isAcc()?"":"none";
 }
 
 function enterApp(){
@@ -2640,6 +2656,120 @@ function downloadReport(){
   document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
   toast("ดาวน์โหลดไฟล์รายงานแล้ว ✓ เปิดไฟล์แล้วสั่งพิมพ์/บันทึก PDF ได้เลย");
 }
+
+/* ===== สำรองข้อมูล (.json) + เรียกดูย้อนหลังแบบดูอย่างเดียว ===== */
+function updateBackupInfo(){
+  const el=document.getElementById("backupInfo"); if(!el) return;
+  const n=Object.keys(results||{}).length;
+  el.innerHTML="ผลตรวจนับในระบบตอนนี้: <b>"+n.toLocaleString()+"</b> รายการ"
+    +(lastPullAt? "<br>ตรงกับศูนย์กลางล่าสุด: "+lastPullAt.toLocaleString("th-TH"):"");
+}
+function buildBackupObject(){
+  const byKey={}; ASSETS.forEach(x=>byKey[keyOf(x)]=x);
+  const keys=Object.keys(results||{});
+  const assetsSubset=keys.map(k=>byKey[k]).filter(Boolean);
+  return {
+    meta:{ type:"asset-count-backup", app_version:APP_CODE_VERSION,
+           at:new Date().toISOString(), by:counterName||"",
+           results_count:keys.length, assets_count:assetsSubset.length },
+    assets:assetsSubset, results:results
+  };
+}
+function downloadBackup(){
+  const keys=Object.keys(results||{});
+  if(!keys.length){ toast("ยังไม่มีผลตรวจนับให้สำรอง"); return; }
+  const obj=buildBackupObject();
+  const blob=new Blob([JSON.stringify(obj)],{type:"application/json;charset=utf-8"});
+  const url=URL.createObjectURL(blob); const a=document.createElement("a");
+  const d=new Date(); const pad=n=>String(n).padStart(2,"0");
+  const stamp=d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate())+"_"+pad(d.getHours())+pad(d.getMinutes());
+  a.href=url; a.download="backup_ตรวจนับสินทรัพย์_"+stamp+".json";
+  document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+  toast("สำรองข้อมูลแล้ว "+keys.length.toLocaleString()+" รายการ ✓ เก็บไฟล์ .json ไว้เป็น backup");
+}
+function openBackupFile(inputEl){
+  const f=inputEl.files && inputEl.files[0];
+  if(!f){ return; }
+  const rd=new FileReader();
+  rd.onload=e=>{
+    let bk=null;
+    try{ bk=JSON.parse(e.target.result); }catch(err){ toast("ไฟล์สำรองไม่ถูกต้อง (อ่าน JSON ไม่ได้)"); inputEl.value=""; return; }
+    if(!bk || typeof bk!=="object" || !bk.results){ toast("ไฟล์นี้ไม่ใช่ไฟล์สำรองผลตรวจนับ"); inputEl.value=""; return; }
+    viewBackup(bk);
+  };
+  rd.onerror=()=>{ toast("เปิดไฟล์ไม่สำเร็จ"); };
+  rd.readAsText(f);
+  inputEl.value="";
+}
+function viewBackup(bk){
+  const w=window.open("","_blank");
+  if(!w){ toast("เบราว์เซอร์บล็อกป๊อปอัป — อนุญาตป๊อปอัปแล้วลองเปิดใหม่"); return; }
+  w.document.open(); w.document.write(buildBackupReportHTML(bk)); w.document.close(); w.focus();
+  toast("เปิดไฟล์สำรองแบบดูอย่างเดียว ✓ (ไม่กระทบข้อมูลปัจจุบัน)");
+}
+/* รายงานจากไฟล์สำรอง (อ่านอย่างเดียว) — ไม่ยุ่งกับ ASSETS/results ปัจจุบัน */
+function buildBackupReportHTML(bk){
+  const assets=bk.assets||[]; const res=bk.results||{};
+  const byKey={}; assets.forEach(x=>byKey[keyOf(x)]=x);
+  const items=Object.keys(res).map(k=>{
+    const x=byKey[k]||{a:String(k).split("|")[0], sub:(String(k).split("|")[1]||"0"), d:"", av:0, bv:0, q:0, ul:""};
+    return {x:x, r:res[k]};
+  }).sort((a,b)=>String(a.x.a).localeCompare(String(b.x.a)));
+  const tot={av:0,bv:0,sap:0,s1:0,s2:0,s3:0,s4:0,s6:0,cntItems:0,pend:0};
+  let body="";
+  items.forEach((it,idx)=>{
+    const x=it.x, r=it.r||{}, q=r.q||{};
+    const av=Number(x.av)||0, bv=Number(x.bv)||0, sap=Number(x.q)||0;
+    const s=[1,2,3,4,6].map(id=>Number(q[id]||0));
+    tot.av+=av; tot.bv+=bv; tot.sap+=sap;
+    tot.s1+=s[0]; tot.s2+=s[1]; tot.s3+=s[2]; tot.s4+=s[3]; tot.s6+=s[4];
+    if(r.pending) tot.pend++; else tot.cntItems++;
+    const stTxt=r.pending?"รอตรวจสอบ":"นับแล้ว";
+    const cell=v=>v?String(v):"";
+    body+="<tr>"
+      +"<td class='c'>"+(idx+1)+"</td>"
+      +"<td class='code'>"+esc(x.a)+"</td>"
+      +"<td class='name'>"+esc(x.d||"—")+"</td>"
+      +"<td class='c'>"+esc(String(x.ul||"").trim()||"—")+"</td>"
+      +"<td class='n'>"+moneyR(av)+"</td><td class='n'>"+sap.toLocaleString()+"</td>"
+      +"<td class='n"+(bv>0?" hi":"")+"'>"+moneyR(bv)+"</td>"
+      +"<td class='c'>"+cell(s[0])+"</td><td class='c'>"+cell(s[1])+"</td><td class='c'>"+cell(s[2])+"</td>"
+      +"<td class='c'>"+cell(s[3])+"</td><td class='c'>"+cell(s[4])+"</td>"
+      +"<td class='c st'>"+stTxt+"</td><td class='note'>"+esc((r.note||"").replace(/\n/g," "))+"</td>"
+      +"<td class='c'>"+esc(r.by||"")+"</td></tr>";
+  });
+  const totalRow="<tr class='total'>"
+    +"<td class='c' colspan='4'>รวม (Total) — "+items.length.toLocaleString()+" รายการ</td>"
+    +"<td class='n'>"+moneyR(tot.av)+"</td><td class='n'>"+tot.sap.toLocaleString()+"</td><td class='n'>"+moneyR(tot.bv)+"</td>"
+    +"<td class='c'>"+tot.s1.toLocaleString()+"</td><td class='c'>"+tot.s2.toLocaleString()+"</td><td class='c'>"+tot.s3.toLocaleString()+"</td>"
+    +"<td class='c'>"+tot.s4.toLocaleString()+"</td><td class='c'>"+tot.s6.toLocaleString()+"</td><td class='c'></td><td class='note'></td><td class='c'></td></tr>";
+  const meta=bk.meta||{};
+  const madeAt=meta.at?new Date(meta.at).toLocaleString("th-TH",{dateStyle:"long",timeStyle:"short"}):"-";
+  return '<!doctype html><html lang="th"><head><meta charset="utf-8"><title>รายงานตรวจนับ (ไฟล์สำรอง)</title><style>'
+    +'@page{size:A4 landscape;margin:9mm}*{box-sizing:border-box}'
+    +'body{font-family:"TH Sarabun New","Sarabun","Tahoma",sans-serif;margin:0;color:#1a1a1a}'
+    +'.rp-title{font-size:22pt;font-weight:800;text-align:center;margin:0 0 2px}'
+    +'.rp-sub{font-size:12pt;font-weight:700;text-align:center;margin:0 0 2px}'
+    +'.rp-meta{font-size:9.5pt;color:#444;text-align:center;margin:0 0 8px}'
+    +'.rp-badge{display:inline-block;background:#fff3cd;border:1px solid #e6cf9a;border-radius:6px;padding:2px 10px;font-weight:700;color:#8a5a00}'
+    +'table{border-collapse:collapse;width:100%}th,td{border:1px solid #555;padding:3px 5px;font-size:9pt;line-height:1.25}'
+    +'th{background:#2c5a40;color:#fff;font-weight:700;text-align:center}'
+    +'td.c{text-align:center;white-space:nowrap}td.n{text-align:right;white-space:nowrap}'
+    +'td.code{font-weight:700;white-space:nowrap}td.name{min-width:140px}td.note{min-width:80px;color:#333}'
+    +'td.hi{color:#9a6a12;font-weight:700}td.st{font-size:8.5pt}'
+    +'tbody tr:nth-child(even) td{background:#f4f7f4}tr.total td{background:#ffe9a8;font-weight:800;font-size:9.5pt;border-top:2px solid #333}'
+    +'thead{display:table-header-group}@media print{.noprint{display:none}}'
+    +'.noprint{text-align:center;margin:10px}.noprint button{font-size:14px;font-weight:700;padding:9px 18px;border:none;border-radius:8px;background:#2c5a40;color:#fff;cursor:pointer}'
+    +'</style></head><body>'
+    +'<div class="noprint"><button onclick="window.print()">🖨️ พิมพ์ / บันทึก PDF</button></div>'
+    +'<div class="rp-title">รายงานตรวจนับสินทรัพย์ถาวร</div>'
+    +'<div class="rp-sub"><span class="rp-badge">📁 ไฟล์สำรอง (ดูอย่างเดียว)</span></div>'
+    +'<div class="rp-meta">ผลตรวจนับ '+items.length.toLocaleString()+' รายการ (นับแล้ว '+tot.cntItems.toLocaleString()+' · รอตรวจสอบ '+tot.pend.toLocaleString()+') · '
+      +'สำรองเมื่อ '+esc(madeAt)+(meta.by?(' · โดย '+esc(meta.by)):'')+'</div>'
+    +'<table><thead><tr><th>No.</th><th>รหัส</th><th>ชื่อสินทรัพย์</th><th>อายุ</th><th>ราคาทุน</th><th>SAP</th><th>BV</th>'
+    +'<th>ใช้งาน</th><th>เลิกใช้</th><th>โอนย้าย</th><th>ชำรุด</th><th>สูญหาย</th><th>สถานะ</th><th>หมายเหตุ</th><th>ผู้ตรวจนับ</th></tr></thead>'
+    +'<tbody>'+body+totalRow+'</tbody></table></body></html>';
+}
 function jumpQR(){
   curFilter="qr";
   document.querySelectorAll("#statusChips .chip").forEach(c=>c.classList.toggle("on", c.dataset.f==="qr"));
@@ -2756,7 +2886,8 @@ function showPage(p){
   if(p==="summary"){ renderSummary(); }
   if(p==="task"){ renderTasks(); }
   if(p==="setup"){ updateDataInfo(); updateResultInfo(); renderUsers(); loadUsers(false);
-    fillDeptOptions();
+    fillDeptOptions(); updateBackupInfo();
+    const bb=document.getElementById("backupBox"); if(bb) bb.style.display=isAcc()?"":"none";
     const wd=document.getElementById("whoDesc");
     if(wd) wd.textContent = (counterName||"—")+" · "+roleLabel(myRole)+(isUnit()?(" · แผนก "+(myDept||"—")):" · เห็นทุกแผนก"); }
   window.scrollTo(0,0);
